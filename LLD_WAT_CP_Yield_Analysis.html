@@ -95,7 +95,13 @@ select{padding:4px 8px;margin-left:6px}.note{border-left:4px solid #f59e0b;paddi
 <h2>7. CP Fail Bin 柏拉圖</h2>
 <div class="card"><div class="cv"><canvas id="c1"></canvas></div><p class="mut">各 Fail Bin 數量（pcs）加總；累積百分比相對 Fail Bin 總量。</p></div>
 <h2>8. Fail Bin 損失率 vs CP Yield（Spearman）</h2>
-<div class="card"><div class="cv"><canvas id="c2"></canvas></div><p class="mut">損失率＝bin 數量 ÷ Total in × 100；與 CP Yield、WAT Yield 的 Spearman ρ。損失率越高 CP Yield 越低（負相關）。</p><div class="hm"><table id="c3"></table></div></div>
+<div class="card"><div class="cv"><canvas id="c2"></canvas></div><p class="mut">損失率＝bin 數量 ÷ Total in × 100；與 CP Yield、WAT Yield 的 Spearman ρ。損失率越高 CP Yield 越低（負相關）。</p>
+<div class="note"><b>註：為何部分 bin 呈正相關？（如 IR2_1(14) ρ≈+0.26）</b><br>
+理論上損失越多 Yield 越低（負相關），出現正相關有兩類原因：<br>
+<b>1. 幾乎都是 0 的 bin，相關係數是雜訊。</b>DIR2_1(16) 只有 93 個 Lot 有損失（1.9%）、IR2_1_1(15) 17 個、IR2_2(18) 10 個、VZ3(20) 53 個，平均損失都低於 0.05%；其餘 98% 以上的 Lot 皆為 0，大量並列使 ρ≈0（+0.01～+0.05），正負號沒有意義。只看有損失的 Lot 時，DIR2_1 −0.24、VZ3 −0.34、IR2_2 −0.57，方向為負（IR2_1_1 僅 17 個 Lot，樣本太少）。<br>
+<b>2. IR2_1(14) 的正相關來自機台與 bin 重新分配。</b>IR2_1 有 1,607 個 Lot 有損失（平均 0.20%），只看這些 Lot 時 ρ＝−0.23（方向正常）。但它主要出現在 3380P-ATE-1003（53% 的 Lot 有 IR2_1 損失；322 僅 0.8%、2101 僅 3.9%），且與 IR0(8) 的損失相關 −0.70、與 DIR0(9) 相關 +0.50：1003 把一部分原本落在 IR0 的損失改分到 IR2_1／DIR0。因此有 IR2_1 損失的 Lot 反而 CP Yield 較高（97.03% vs 95.77%），因為這些 Lot 在 1003 測試、IR0 損失較少——損失只是換了 bin，並未消失。<br>
+<b>建議：</b>單一 bin 的相關係數在不同機台分 bin 方式不同時會誤導，應合併 IR0(8)＋DIR0(9)＋IR2_1(14) 一起看：合併後與 CP Yield 的 ρ＝<b>−0.82</b>（單獨為 IR0 −0.65、DIR0 −0.24、IR2_1 +0.26），方向一致且更強；在同一 Part No 內，各機台的合併損失差異僅約 −0.06～+0.03 pt（≈0）。
+</div><div class="hm"><table id="c3"></table></div></div>
 <h2>9. 因子 × CP 損失率熱圖</h2>
 <div class="card"><label class="mut">因子：<select id="csel"></select></label><div class="hm" id="c4"></div><p class="mut">各因子水準（Lot 數 ≥20）下，前 8 大 Fail Bin 的平均損失率(%)。</p></div>
 </div>
