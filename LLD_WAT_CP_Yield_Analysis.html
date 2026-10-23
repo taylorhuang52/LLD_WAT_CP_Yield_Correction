@@ -43,7 +43,12 @@ select{padding:4px 8px;margin-left:6px}.note{border-left:4px solid #f59e0b;paddi
 <div class="card"><div class="cv s"><canvas id="a2"></canvas></div><p class="mut">五因子同時放入線性模型，各因子「獨有」解釋力（移除該因子後 R² 的下降量）。模型總 R²：WAT 0.40、CP 0.59、gap 0.15。</p></div>
 
 <h2>2. 各因子水準的平均 Yield</h2>
-<div class="card"><label class="mut">因子：<select id="fsel"></select></label><div class="cv s"><canvas id="a3"></canvas></div><div class="hm"><table id="ft"></table></div><p class="mut">圖中僅顯示 Lot 數 ≥20 的水準；表格列出全部水準。「Part No 調整後」為扣除同 Part No 平均後的差異（pt），可看出因子在同一產品內的真實差別。</p></div>
+<div class="card"><label class="mut">因子：<select id="fsel"></select></label><div class="cv s"><canvas id="a3"></canvas></div><div class="hm"><table id="ft"></table></div><p class="mut">圖中僅顯示 Lot 數 ≥20 的水準；表格列出全部水準。「Part No 調整後」為扣除同 Part No 平均後的差異（pt），可看出因子在同一產品內的真實差別。Part No 本身為調整基準，故顯示「基準」；Lot 數＜30 的水準顯示「n<30」（樣本太少不計算）；「—」表示該水準沒有 CP 資料。</p>
+<div class="note"><b>註：「Part No 調整後」是什麼？</b><br>
+不同 Part No 的良率本來就差很多（例如 15U 約 93.7%、09U 約 98.9%）。若某機台剛好測了較多 15U，其平均良率就會偏低，但那是產品造成的，不是機台造成的。因此先把每個 Lot 的良率減去「它所屬 Part No 的平均良率」，再依該因子的各水準取平均，單位為百分點（pt）：正數代表比同產品平均高，負數代表比同產品平均低。例如 3360P-ATE-322 的 WAT +0.25、CP −0.32，表示測同一種 Part No 時，這台的 WAT 平均高 0.25 pt、CP 平均低 0.32 pt。<br>
+<b>空白或符號的意思：</b>Part No 本身是調整的基準（減去自己的平均必為 0，沒有資訊），故顯示「基準」；「n<30」＝該水準 Lot 數少於 30，樣本太少不計算；「—」＝該水準沒有 CP 資料，只能算 WAT（例如「(無CP)」的 75 個 Lot）。<br>
+<b>怎麼看：</b>EPI、BGBM、Device Mapping 的調整後數值幾乎都是 0.00～0.02，代表它們在同一個 Part No 內沒有差別，表面差異是 Part No 造成的；只有 Station 的 3360P-ATE-322 仍有明顯數值（WAT +0.25、CP −0.32、gap +0.57），是唯一值得追蹤的機台效應。
+</div></div>
 
 <h2>3. Yield 分布與異常批</h2>
 <div class="card"><div class="cv s"><canvas id="a4"></canvas></div><p class="mut">Lot 良率區間分布（%）：WAT 與 CP。</p>
@@ -184,7 +189,7 @@ const hd=['Lot','Station','Device Mapping','Part No','EPI','BGBM','WAT Yield','C
 function drawF(){const f=document.getElementById('fsel').value;const lv=R.levels[f].filter(r=>r[1]>=20);if(a3)a3.destroy();
 a3=new Chart('a3',{type:'bar',data:{labels:lv.map(r=>r[0]),datasets:[{label:'WAT Yield',data:lv.map(r=>r[2]),backgroundColor:'#2563eb'},{label:'CP Yield',data:lv.map(r=>r[3]),backgroundColor:'#f59e0b'}]},options:{maintainAspectRatio:false,scales:{y:{min:88,max:100,title:{display:true,text:'平均 Yield (%)'}},x:{ticks:{autoSkip:false}}}}});
 const adj=(R.adj[f]||[]).reduce((m,r)=>{m[r[0]]=r;return m},{});
-const rows=R.levels[f].map(r=>{const a=adj[r[0]];return [r[0],r[1],r[2],r[3],r[4],r[5],r[6],a?a[2]:'',a?a[3]:'',a?a[4]:'']});
+const pv=(a,k)=>f==='Part No'?'基準':(a?(a[k]==null?'—':a[k]):'n<30');const rows=R.levels[f].map(r=>{const a=adj[r[0]];return [r[0],r[1],r[2],r[3],r[4],r[5],r[6],pv(a,2),pv(a,3),pv(a,4)]});
 tbl('ft',['水準','Lot 數','WAT 平均','CP 平均','Yield gap','WAT 中位數','CP 中位數','WAT Part No 調整後(pt)','CP Part No 調整後(pt)','gap Part No 調整後(pt)'],rows)}
 function P2(){
 const mv=R.mv;bar3('b1',mv.items,WT.map(t=>[t,mv.sp[t]]),false,'Spearman ρ');
