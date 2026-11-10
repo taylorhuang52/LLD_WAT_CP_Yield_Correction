@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>15U WAT/CP Yield Gap 分析</title>
+<style>
+:root{--bg:#0f172a;--panel:#1e293b;--line:#334155;--tx:#e2e8f0;--mut:#94a3b8;--wat:#38bdf8;--cp:#fb923c;--gap:#f43f5e;--ok:#34d399;--acc:#fbbf24}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:#020617;color:var(--tx);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;overflow:hidden}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center;}
+.slide{position:absolute;inset:0;background:var(--bg);padding:48px 64px;display:none;flex-direction:column}
+.slide.on{display:flex}
+h1{font-size:50px;line-height:1.2} h2{font-size:32px;margin-bottom:6px} .sub{color:var(--mut);font-size:18px;margin-bottom:18px}
+.tag{display:inline-block;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px 10px;font-size:14px;color:var(--mut);margin-right:6px}
+.row{display:flex;gap:24px;flex:1;min-height:0}.col{flex:1;min-width:0;display:flex;flex-direction:column}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 20px}
+.kpis{display:flex;gap:16px;margin:10px 0 18px}.kpi{flex:1}.kpi .v{font-size:40px;font-weight:700}.kpi .l{color:var(--mut);font-size:15px}.kpi .d{font-size:16px;margin-top:2px}
+ul{padding-left:22px;font-size:19px;line-height:1.65}li{margin-bottom:4px}
+.note{font-size:15px;color:var(--mut);margin-top:8px}
+.foot{position:absolute;left:64px;right:64px;bottom:16px;display:flex;justify-content:space-between;color:#64748b;font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:15px}th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}th{color:var(--mut);font-weight:500}
+.hi{color:var(--gap);font-weight:600}.g{color:var(--ok)}
+svg text{fill:var(--mut);font-size:13px}
+.chart{flex:1;min-height:0}
+b.w{color:var(--wat)}b.c{color:var(--cp)}b.r{color:var(--gap)}
+#nav{position:fixed;left:50%;transform:translateX(-50%);bottom:6px;color:#64748b;font-size:13px;z-index:9}
+@media print{html,body{overflow:visible;height:auto}#stage{position:static;transform:none!important;width:auto;height:auto}.slide{display:flex!important;position:relative;width:1280px;height:720px;page-break-after:always}#nav{display:none}@page{size:1280px 720px;margin:0}}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<section class="slide">
+ <div style="margin-top:150px"><span class="tag">Part No. 15U</span><span class="tag">50A / 550mV</span><span class="tag">環球晶 EPI · Mosel BGBM</span></div>
+ <h1 style="margin-top:22px">15U WAT / CP Yield Gap<br>10/20 後擴大原因分析</h1>
+ <p class="sub" style="margin-top:22px;font-size:22px">WAT 偏高 + CP 的 DIR0 bin 偏高,兩端同時推大 gap</p>
+ <p class="note" style="margin-top:auto">資料來源:WAT_CP_Summary_20261109 · DailyReport_20261109100111　|　分析日期 2026-11-10</p>
+</section>
+
+<section class="slide">
+ <h2>結論摘要</h2><div class="sub">以 10/20 為界,對比 8/1–10/19(基準,178 lots)與 10/20 後(16 lots)</div>
+ <div class="kpis">
+  <div class="card kpi"><div class="l">Yield gap (WAT − CP)</div><div class="v" id="k_gap"></div><div class="d hi" id="k_gapd"></div></div>
+  <div class="card kpi"><div class="l">WAT yield</div><div class="v" style="color:var(--wat)" id="k_wat"></div><div class="d" id="k_watd"></div></div>
+  <div class="card kpi"><div class="l">CP yield (Initial)</div><div class="v" style="color:var(--cp)" id="k_cp"></div><div class="d" id="k_cpd"></div></div>
+ </div>
+ <ul style="font-size:21px;line-height:1.8">
+  <li><b class="r">CP 端主因:DIR0(9) bin</b> 由 <span id="s_d0"></span>% 升到 <span id="s_d1"></span>%(佔 gross die),約解釋 CP 降幅的 95%;AEC-Q 也加倍。</li>
+  <li><b class="w">WAT 端次因:BVR 整體上移約 +0.23V</b>,WAT yield 隨 BVR 升高(r=<span id="s_r"></span>),但 CP yield 與 BVR 無關,放大 gap。</li>
+  <li><b>WAT 看不到 DIR0 問題</b>:lot 層級 DIR0 與 BVR / Vf / IR(18V) 幾乎無相關,WAT 無法預警。</li>
+  <li>DIR0 並非 2101 機台獨有(9 月 15U 在 1003 也曾 4.4%),且 10 月內已出現「lot 分群」高低值,傾向 <b>lot / 製程面</b>問題,機台因素仍需排除。</li>
+ </ul>
+</section>
+
+<section class="slide">
+ <h2>Gap 趨勢:10/20 後明顯跳升</h2><div class="sub">每週平均(依 Test Date,2026/6 起);10/12–10/25 之間無 15U lot 測試</div>
+ <div class="card" style="flex:3;min-height:0" id="c_trend"></div><div class="card" style="flex:2;min-height:0;margin-top:10px" id="c_trend2"></div>
+ <div class="note">10/26 週與 11/2 週 gap 分別為 6.3 與 6.4,為 2026 年內最高;先前最高週均值為 4.7(4 月)。</div>
+</section>
+
+<section class="slide">
+ <h2>Gap 拆解:WAT 上升 + CP 下降</h2><div class="sub">gap 增加 +4.8 pts = WAT +1.95 與 CP −2.85</div>
+ <div class="row">
+  <div class="col"><div class="card chart" id="c_dec"></div></div>
+  <div class="col">
+   <div class="card"><table id="t_dec"></table></div>
+   <ul style="margin-top:14px;font-size:18px"><li>CP 下降的貢獻 (<span id="dec_cp"></span> pts) 大於 WAT 上升 (<span id="dec_wat"></span> pts),但兩者方向相反,<b>同時推大 gap</b>。</li>
+   <li>新批 16 lots 的 gap 範圍 <span id="gr"></span>,基準期 P90 僅 <span id="gp90"></span>:16 lots 全部落在基準 P90 附近或以上,屬批次性偏移,不是個別 outlier。</li></ul>
+  </div>
+ </div>
+</section>
+
+<section class="slide">
+ <h2>CP 端:DIR0(9) 是主要損失 bin</h2><div class="sub">各 fail bin 佔 gross die 的比例(%),基準 vs 10/20 後</div>
+ <div class="row">
+  <div class="col" style="flex:1.3"><div class="card chart" id="c_bins"></div></div>
+  <div class="col">
+   <ul style="font-size:18px">
+    <li>DIR0(9):<b class="r">+<span id="b_d"></span> pts</b>,相當於 Initial CP yield 降幅 2.85 pts 的 ~95%。</li>
+    <li>AEC-Q(DPAT/GDBC):+<span id="b_a"></span> pts,影響 final yield(含 AEC-Q:91.4 → 88.0)。</li>
+    <li>IR0(8) 小幅 +0.21 pts;VZ0、contact、VF 無顯著變化。</li>
+    <li>→ 不是漏電 IR 本身變差,而是 <b>IR 量測前後的差值(ΔIR)不穩</b>,屬 <b>IR 穩定性 / 表面或鈍化相關</b>的特徵。</li>
+   </ul>
+   <div class="note">註:DIR0 解讀依 bin 命名推斷(IR0 的差值項),請以 CP test program 規格確認。</div>
+  </div>
+ </div>
+</section>
+
+<section class="slide">
+ <h2>DIR0 自 10/3 起逐步惡化,且呈 lot 分群</h2><div class="sub">15U 的 DIR0 長期約 1–2%,10 月起抬升、11 月達 4–6%</div>
+ <div class="row">
+  <div class="col"><div class="card chart" id="c_dirw"></div><div class="note">全部 15U lots 週平均 DIR0(%)</div></div>
+  <div class="col"><div class="card chart" id="c_dird"></div><div class="note">ATE-2101 每日平均 DIR0(%),9/22 起;點大小 = lot 數</div></div>
+ </div>
+ <ul style="font-size:17px;margin-top:10px"><li>9/30 前約 1.0–1.5%,10/3–10/8 跳至 3.3–3.9%,10/9–10/10 又回到 1.4%,11/1 後 3.4 → 5.9%:<b>同一機台、同一天內高低值並存</b>,指向 lot 屬性。</li></ul>
+</section>
+
+<section class="slide">
+ <h2>機台是主因嗎?目前證據偏向「否」,但尚未排除</h2><div class="sub">15U 以 DIR0(%) 比較不同機台與時間</div>
+ <div class="row">
+  <div class="col"><div class="card"><table id="t_st"></table></div>
+  <ul style="margin-top:14px;font-size:18px">
+   <li>9 月 15U 的 17 個 lot 在 <b>ATE-1003</b> 測試,DIR0 平均 4.41%,同期 2101 只有 1.14%:<b>1003 也會出現高 DIR0</b>,高 DIR0 並非 2101 專屬。</li>
+   <li>反向證據:10/20 後 16 lots 全部在 2101;同期 1003 只測 22U/23U/24U(DIR0 ≈ 0.5–0.7%),無法與 15U 直接對比。</li>
+  </ul></div>
+  <div class="col"><div class="card"><b>建議的機台排除實驗</b>
+   <ul style="font-size:17px"><li>取 2–3 個 10/20 後的高 DIR0 lot(如 RK33316、RK33329、RK33330),在 <b>ATE-1003</b> 重測。</li>
+   <li>同時取 1 個基準期正常 lot 在 2101 重測,確認 2101 的 bias。</li>
+   <li>檢查 2101 probe card 使用 touchdown 數、最近 PM / 清針日期,與 10/3 起升高時間點對照。</li></ul></div></div>
+ </div>
+</section>
+
+<section class="slide">
+ <h2>WAT 端:BVR 上移,WAT yield 被墊高</h2><div class="sub">15U 2026/6 起所有 lot,依 BVR(10mA) 分五等分</div>
+ <div class="row">
+  <div class="col"><div class="card chart" id="c_bvq"></div></div>
+  <div class="col">
+   <div class="card"><table id="t_par"></table></div>
+   <ul style="margin-top:12px;font-size:17px">
+    <li>BVR(10mA) 平均 19.79 → 20.02V(+0.23V),新批的標準差僅 0.08V,是整批偏移。</li>
+    <li>BVR 最高一組 WAT 95.1%,最低一組 92.1%;<b>CP 都在 91.3–91.8%</b>,故 BVR 越高 gap 越大(r=<span id="r2"></span>)。</li>
+    <li>Vf 同步微升(+3mV),IR(18V) 偏低 → 與 epi / 擴散條件小幅偏移一致。</li>
+   </ul>
+  </div>
+ </div>
+</section>
+
+<section class="slide">
+ <h2>WAT 為何抓不到 DIR0?</h2><div class="sub">15U lot 層級相關係數(2026/6 起)</div>
+ <div class="row">
+  <div class="col"><div class="card chart" id="c_corr"></div></div>
+  <div class="col"><ul style="font-size:19px">
+   <li>DIR0 與 BVR 的 r = <b id="cdb"></b>、與 WAT yield 的 r = <b id="cdw"></b>:<b>WAT 參數無法預測 DIR0</b>。</li>
+   <li>DIR0 與 CP yield 的 r = <b id="cdc" class="r"></b>:DIR0 是 CP yield 的主要驅動。</li>
+   <li>所以 gap 變大時,WAT 端看似「正常甚至更好」,問題只在 CP 暴露 → <b>屬 WAT 監控盲區</b>。</li>
+   <li>若要在 WAT 階段預警,需檢討是否有與 IR 穩定性相關的 test key / 量測條件(例如較高電壓下的 IR 差值)。</li>
+  </ul></div>
+ </div>
+</section>
+
+<section class="slide">
+ <h2>10/20 後 16 個 lot 明細</h2><div class="sub">RUN ON ≥ 10/22,Test Date 11/1–11/6,全部為 ATE-2101</div>
+ <div class="card" style="flex:1;overflow:hidden"><table id="t_lots" style="font-size:14px"></table></div>
+</section>
+
+<section class="slide">
+ <h2>推論與建議行動</h2><div class="sub">依證據強度排序</div>
+ <div class="row">
+  <div class="col"><div class="card" style="flex:1"><b>可能原因(待驗證)</b>
+   <ul style="font-size:17px">
+    <li><b>① 新批 lot 的 IR 穩定性(DIR0)變差</b>:與 BVR/Vf 偏移同時出現,懷疑 epi 或前段製程條件在 10/20 前後調整(需查 EPI lot、爐管 / 擴散、鈍化條件的 change log)。</li>
+    <li><b>② 2101 機台或 probe card 狀態</b>:10/3 起 DIR0 上升的時間點需對照 PM / 換針紀錄。</li>
+    <li><b>③ WAT 規格窗口</b>:BVR 上移使 WAT yield 偏樂觀,gap 被進一步放大。</li>
+   </ul></div></div>
+  <div class="col"><div class="card" style="flex:1"><b>建議行動</b>
+   <ul style="font-size:17px">
+    <li>以 lot 為單位回溯 EPI 來源(RK332xx/333xx 與 RK326xx 高 DIR0 lots 是否共用同一 epi 批)。</li>
+    <li>高 DIR0 lot 於 ATE-1003 重測,分離機台 vs 材料。</li>
+    <li>調出高 DIR0 lot 的 wafer map,確認 fail 分布是否集中邊緣或特定區域。</li>
+    <li>將 DIR0% 納入 15U 每週看板,設警戒線(例如 &gt;3%)。</li>
+    <li>檢討 WAT 對 IR 穩定性的偵測能力。</li>
+   </ul></div></div>
+ </div>
+</section>
+
+<section class="slide">
+ <h2>資料範圍與限制</h2>
+ <ul style="margin-top:14px">
+  <li>來源:WAT_CP_Summary(15U 共 534 lots,Test Date 2025/12/24–2026/11/06)與 DailyReport(LLD CP Summary),以 Lot No. 一對一對應(531 lots 可對上)。</li>
+  <li>「10/20 後」以 Test Date ≥ 2026-10-20 定義,共 16 lots;其 RUN ON 皆 ≥ 10/22。10/11–10/31 之間沒有 15U lot 測試,實際首批測試日為 11/1。</li>
+  <li>基準期取 2026/8/1–10/19(178 lots,含 17 lots 在 ATE-1003)。換用其他基準期(如 9–10 月僅 2101),結論方向一致。</li>
+  <li>樣本僅 16 lots、7 個測試日,屬早期訊號;DIR0 的機制為依 bin 名稱推論。</li>
+  <li>未納入 wafer map 與 per-wafer 資料(DailyReport 中 15U 新批的 per-slot 欄位皆為 0,無法使用)。</li>
+ </ul>
+</section>
+
+</div>
+<div id="nav">← → 切換 · F 全螢幕 · 列印可輸出 PDF</div>
+
+<script>
+const D={"n_base": 178, "n_post": 16, "base": {"WAT Yield": 93.39, "CP Yield": 91.84, "Yield gap": 1.55}, "post": {"WAT Yield": 95.34, "CP Yield": 88.99, "Yield gap": 6.35}, "weekly": [["2026-06-01", 96.1, 93.06, 3.04, 30], ["2026-06-08", 93.88, 91.82, 2.06, 30], ["2026-06-15", 93.67, 92.14, 1.53, 29], ["2026-06-22", 95.34, 92.81, 2.53, 7], ["2026-06-29", 92.64, 91.35, 1.29, 25], ["2026-07-06", 88.81, 89.02, -0.21, 6], ["2026-07-13", 90.83, 90.16, 0.67, 13], ["2026-07-20", 87.71, 88.81, -1.1, 18], ["2026-07-27", 94.8, 92.77, 2.03, 1], ["2026-08-03", 92.35, 91.39, 0.96, 32], ["2026-08-17", 91.2, 91.77, -0.57, 8], ["2026-08-24", 92.54, 92.29, 0.25, 12], ["2026-08-31", 95.47, 91.26, 4.21, 23], ["2026-09-14", 93.86, 93.02, 0.84, 13], ["2026-09-21", 94.09, 92.8, 1.28, 37], ["2026-09-28", 94.88, 92.5, 2.38, 18], ["2026-10-05", 92.08, 90.68, 1.39, 35], ["2026-10-26", 96.4, 90.08, 6.32, 2], ["2026-11-02", 95.18, 88.83, 6.35, 14]], "bins": {"contact(6)": [0.01, 0.03], "VZ0(7)": [2.0, 1.92], "IR0(8)": [3.76, 3.97], "DIR0(9)": [1.95, 4.66], "VF0(10)": [0.29, 0.34], "VF1(17)": [0.04, 0.05], "AEC-Q (DPAT,GDBC…etc)": [0.41, 0.96]}, "dir_weekly": [["2026-08-03", 1.73, 32], ["2026-08-17", 1.72, 8], ["2026-08-24", 1.57, 12], ["2026-08-31", 3.58, 23], ["2026-09-14", 0.96, 13], ["2026-09-21", 1.17, 37], ["2026-09-28", 1.51, 18], ["2026-10-05", 2.84, 35], ["2026-10-26", 3.41, 2], ["2026-11-02", 4.85, 14]], "dir_daily": [["2026-09-24", 1.31, 4], ["2026-09-25", 1.15, 15], ["2026-09-26", 1.06, 14], ["2026-09-27", 1.83, 2], ["2026-09-28", 1.51, 1], ["2026-09-29", 1.17, 6], ["2026-09-30", 1.2, 5], ["2026-10-01", 0.93, 3], ["2026-10-03", 3.27, 3], ["2026-10-05", 3.49, 3], ["2026-10-07", 3.94, 12], ["2026-10-08", 3.3, 7], ["2026-10-09", 1.42, 9], ["2026-10-10", 1.45, 4], ["2026-11-01", 3.41, 2], ["2026-11-02", 4.05, 8], ["2026-11-06", 5.91, 6]], "dir_station": {"3380P-ATE-1003": [4.41, 17], "3380P-ATE-2101": [1.72, 161]}, "dir_sm": [["2026-08", "3380P-ATE-2101", 1.69, 52], ["2026-09", "3380P-ATE-1003", 4.41, 17], ["2026-09", "3380P-ATE-2101", 1.14, 68], ["2026-10", "3380P-ATE-2101", 2.73, 41], ["2026-11", "3380P-ATE-2101", 4.67, 16]], "par": {"IR(18V)": [20364.874, 19107.52], "BVR(500uA)": [19.773, 19.968], "BVR(5mA)": [19.782, 20.005], "BVR(10mA)": [19.793, 20.024], "Vf(50mA)": [0.239, 0.242], "Vf(260mA)": [0.285, 0.288]}, "bvq": [[19.72, 92.12, 91.82, 0.31, 71], [19.79, 92.47, 91.34, 1.13, 71], [19.83, 93.09, 91.35, 1.74, 71], [19.87, 93.73, 91.62, 2.12, 69], [19.96, 95.1, 91.67, 3.43, 71]], "corr_bv_wat": 0.29, "corr_bv_cp": -0.02, "corr_dir_bv": 0.08, "corr_dir_wat": -0.23, "corr_dir_cp": -0.63, "postlots": [["RK33228", "2026-10-22", "2026-11-01", 96.0, 89.22, 6.78, 3.46, 20.06], ["RK33229", "2026-10-23", "2026-11-02", 95.6, 91.17, 4.43, 3.15, 20.09], ["RK33230", "2026-10-28", "2026-11-06", 94.4, 89.78, 4.62, 5.51, 19.9], ["RK33231", "2026-10-23", "2026-11-02", 97.0, 91.08, 5.92, 2.94, 20.01], ["RK33232", "2026-10-22", "2026-11-02", 94.38, 87.72, 6.66, 4.57, 20.04], ["RK33233", "2026-10-24", "2026-11-02", 95.2, 87.42, 7.78, 5.54, 20.09], ["RK33234", "2026-10-24", "2026-11-01", 96.8, 90.94, 5.86, 3.36, 20.0], ["RK33235", "2026-10-22", "2026-11-02", 96.6, 90.98, 5.62, 3.24, 20.12], ["RK33316", "2026-11-02", "2026-11-06", 93.2, 85.04, 8.16, 8.01, 19.95], ["RK33317", "2026-10-23", "2026-11-02", 97.0, 91.8, 5.2, 2.68, 19.89], ["RK33326", "2026-11-01", "2026-11-06", 94.6, 87.89, 6.71, 5.28, 19.89], ["RK33327", "2026-11-02", "2026-11-06", 96.6, 89.3, 7.3, 5.03, 20.11], ["RK33328", "2026-10-25", "2026-11-02", 95.8, 91.11, 4.69, 2.91, 20.05], ["RK33329", "2026-10-23", "2026-11-02", 90.2, 82.42, 7.78, 7.41, 20.09], ["RK33330", "2026-11-01", "2026-11-06", 98.0, 88.85, 9.15, 5.75, 20.06], ["RK33331", "2026-11-01", "2026-11-06", 94.0, 89.06, 4.94, 5.89, 20.04]], "gap_post_min": 4.43, "gap_post_max": 9.15, "gap_base_p90": 4.507000000000002, "stations_post": {"3380P-ATE-2101": 16}, "stations_base": {"3380P-ATE-2101": 161, "3380P-ATE-1003": 17}};
+const $=id=>document.getElementById(id), f1=v=>v.toFixed(1), f2=v=>v.toFixed(2);
+const C={wat:'#38bdf8',cp:'#fb923c',gap:'#f43f5e',mut:'#94a3b8',grid:'#334155',ok:'#34d399'};
+const NS='http://www.w3.org/2000/svg';
+function svg(el,w,h){el.innerHTML='';const s=document.createElementNS(NS,'svg');s.setAttribute('viewBox',`0 0 ${w} ${h}`);s.setAttribute('width','100%');s.setAttribute('height','100%');el.appendChild(s);return s}
+function add(s,t,a,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;s.appendChild(e);return e}
+function box(el){const r=el.getBoundingClientRect();const sc=stageScale;return [Math.max(300,r.width/sc),Math.max(150,r.height/sc)]}
+function axes(s,W,H,m,x0,x1,y0,y1,yt,xfmt,xticks){
+ for(let i=0;i<=yt;i++){const v=y0+(y1-y0)*i/yt,y=H-m.b-(H-m.t-m.b)*i/yt;add(s,'line',{x1:m.l,x2:W-m.r,y1:y,y2:y,stroke:C.grid});add(s,'text',{x:m.l-6,y:y+4,'text-anchor':'end'},v.toFixed(1))}
+ (xticks||[]).forEach(v=>{const x=m.l+(W-m.l-m.r)*(v-x0)/(x1-x0);add(s,'text',{x,y:H-m.b+18,'text-anchor':'middle'},xfmt(v))})}
+function legend(s,items,x,y){items.forEach((it,i)=>{add(s,'rect',{x:x+i*130,y:y-10,width:12,height:12,fill:it[1],rx:2});add(s,'text',{x:x+i*130+17,y:y+1},it[0])})}
+function lineChart(el,labels,series,opt={}){
+ const [W,H]=box(el),m={l:48,r:20,t:34,b:34};const s=svg(el,W,H);
+ const all=series.flatMap(q=>q.v.filter(v=>v!=null));let y0=opt.y0??Math.floor(Math.min(...all)),y1=opt.y1??Math.ceil(Math.max(...all));
+ const n=labels.length,X=i=>m.l+(W-m.l-m.r)*i/(n-1),Y=v=>H-m.b-(H-m.t-m.b)*(v-y0)/(y1-y0);
+ axes(s,W,H,m,0,1,y0,y1,opt.yt||5,x=>x,[]);
+ const step=Math.ceil(n/(opt.xt||8));labels.forEach((l,i)=>{if(i%step==0)add(s,'text',{x:X(i),y:H-m.b+18,'text-anchor':'middle'},l)});
+ if(opt.mark!=null){const x=X(opt.mark);add(s,'line',{x1:x,x2:x,y1:m.t,y2:H-m.b,stroke:C.mut,'stroke-dasharray':'4 4'});add(s,'text',{x:x+4,y:m.t+12},opt.markLabel||'')}
+ series.forEach(q=>{let d='';q.v.forEach((v,i)=>{if(v==null)return;d+=(d?'L':'M')+X(i)+' '+Y(v)});add(s,'path',{d,fill:'none',stroke:q.c,'stroke-width':2.5});
+  q.v.forEach((v,i)=>{if(v!=null)add(s,'circle',{cx:X(i),cy:Y(v),r:q.r?q.r[i]:3,fill:q.c})})});
+ legend(s,series.map(q=>[q.n,q.c]),m.l,16)}
+function barChart(el,cats,groups,opt={}){
+ const [W,H]=box(el),m={l:48,r:20,t:34,b:opt.bb||46};const s=svg(el,W,H);
+ const all=groups.flatMap(g=>g.v);let y0=Math.min(0,...all),y1=Math.max(...all)*1.15;if(opt.y1)y1=opt.y1;
+ if(opt.y0!=null)y0=opt.y0;const Y=v=>H-m.b-(H-m.t-m.b)*(v-y0)/(y1-y0);axes(s,W,H,m,0,1,y0,y1,5,x=>x,[]);add(s,'line',{x1:m.l,x2:W-m.r,y1:Y(0),y2:Y(0),stroke:'#64748b','stroke-width':1.5});
+ const bw=(W-m.l-m.r)/cats.length,gw=bw*0.72/groups.length;
+ cats.forEach((c,i)=>{groups.forEach((g,j)=>{const x=m.l+bw*i+bw*0.14+gw*j,v=g.v[i],y=Y(Math.max(v,0)),h=Math.abs(Y(v)-Y(0));
+  add(s,'rect',{x,y,width:gw-3,height:h,fill:g.cols?g.cols[i]:g.c,rx:3});
+  add(s,'text',{x:x+gw/2-1.5,y:y-5,'text-anchor':'middle',style:'fill:#e2e8f0'},(opt.lab||f2)(v))});
+  add(s,'text',{x:m.l+bw*(i+.5),y:H-m.b+18,'text-anchor':'middle'},c)});
+ if(groups.length>1)legend(s,groups.map(g=>[g.n,g.c]),m.l,16)}
+const b=D.base,p=D.post;
+// KPIs
+$('k_gap').textContent=f1(p['Yield gap'])+'%';$('k_gapd').textContent=`基準 ${f2(b['Yield gap'])}% → +${f1(p['Yield gap']-b['Yield gap'])} pts`;
+$('k_wat').textContent=f1(p['WAT Yield'])+'%';$('k_watd').textContent=`基準 ${f1(b['WAT Yield'])}% → +${f2(p['WAT Yield']-b['WAT Yield'])} pts`;
+$('k_cp').textContent=f1(p['CP Yield'])+'%';$('k_cpd').textContent=`基準 ${f1(b['CP Yield'])}% → ${f2(p['CP Yield']-b['CP Yield'])} pts`;
+const dk='DIR0(9)',ak='AEC-Q (DPAT,GDBC…etc)';
+$('s_d0').textContent=f2(D.bins[dk][0]);$('s_d1').textContent=f2(D.bins[dk][1]);$('s_r').textContent=D.corr_bv_wat;
+$('dec_cp').textContent=f2(b['CP Yield']-p['CP Yield']);$('dec_wat').textContent=f2(p['WAT Yield']-b['WAT Yield']);
+$('gr').textContent=`${D.gap_post_min}–${D.gap_post_max}`;$('gp90').textContent=f1(D.gap_base_p90);
+$('b_d').textContent=f2(D.bins[dk][1]-D.bins[dk][0]);$('b_a').textContent=f2(D.bins[ak][1]-D.bins[ak][0]);
+$('r2').textContent=D.corr_bv_wat;$('cdb').textContent=D.corr_dir_bv;$('cdw').textContent=D.corr_dir_wat;$('cdc').textContent=D.corr_dir_cp;
+$('t_dec').innerHTML=`<tr><th></th><th>基準</th><th>10/20 後</th><th>Δ</th></tr>`+[['WAT Yield','WAT Yield'],['CP Yield','CP Yield'],['Yield gap','Gap']].map(([k,n])=>`<tr><td>${n}</td><td>${f2(b[k])}</td><td>${f2(p[k])}</td><td class="${k=='Yield gap'?'hi':''}">${(p[k]-b[k]>0?'+':'')+f2(p[k]-b[k])}</td></tr>`).join('');
+function render(){
+ const wk=D.weekly;const mi=wk.findIndex(r=>r[0]>='2026-10-20');
+ lineChart($('c_trend'),wk.map(r=>r[0].slice(5)),[{n:'WAT yield',c:C.wat,v:wk.map(r=>r[1])},{n:'CP yield',c:C.cp,v:wk.map(r=>r[2])}],{y0:86,y1:98,yt:6,mark:mi,markLabel:'10/20',xt:12});
+ lineChart($('c_trend2'),wk.map(r=>r[0].slice(5)),[{n:'Gap (WAT−CP)',c:C.gap,v:wk.map(r=>r[3])}],{y0:-2,y1:8,yt:5,mark:mi,markLabel:'10/20',xt:12});
+ barChart($('c_dec'),['WAT 變化','CP 變化','Gap 變化'],[{n:'Δ pts',c:C.wat,cols:[C.wat,C.cp,C.gap],v:[p['WAT Yield']-b['WAT Yield'],p['CP Yield']-b['CP Yield'],p['Yield gap']-b['Yield gap']]}],{lab:v=>(v>0?'+':'')+f2(v)});
+ const bk=Object.keys(D.bins);const nm={'contact(6)':'contact','VZ0(7)':'VZ0','IR0(8)':'IR0','DIR0(9)':'DIR0','VF0(10)':'VF0','VF1(17)':'VF1','AEC-Q (DPAT,GDBC…etc)':'AEC-Q'};
+ barChart($('c_bins'),bk.map(k=>nm[k]),[{n:'基準 8/1–10/19',c:'#64748b',v:bk.map(k=>D.bins[k][0])},{n:'10/20 後',c:C.gap,v:bk.map(k=>D.bins[k][1])}]);
+ const dw=D.dir_weekly;lineChart($('c_dirw'),dw.map(r=>r[0].slice(5)),[{n:'DIR0 %',c:C.gap,v:dw.map(r=>r[1])}],{y0:0,y1:7,yt:7,xt:6});
+ const dd=D.dir_daily;lineChart($('c_dird'),dd.map(r=>r[0].slice(5)),[{n:'DIR0 % (2101)',c:C.cp,v:dd.map(r=>r[1]),r:dd.map(r=>3+Math.sqrt(r[2])*1.4)}],{y0:0,y1:7,yt:7,xt:9});
+ const bq=D.bvq;barChart($('c_bvq'),bq.map(r=>f2(r[0])+'V'),[{n:'WAT yield',c:C.wat,v:bq.map(r=>r[1])},{n:'CP yield',c:C.cp,v:bq.map(r=>r[2])}],{lab:f1,y1:110});
+ barChart($('c_corr'),['DIR0 vs BVR','DIR0 vs WAT yield','DIR0 vs CP yield'],[{n:'r',c:C.gap,cols:[C.mut,C.wat,C.cp],v:[D.corr_dir_bv,D.corr_dir_wat,D.corr_dir_cp]}],{lab:v=>'r='+f2(v),y0:-0.8,y1:0.3});
+}
+$('t_st').innerHTML='<tr><th>15U 月份 / 機台</th><th>DIR0 %</th><th>lots</th></tr>'+D.dir_sm.map(r=>`<tr><td>${r[0]} · ${r[1].replace('3380P-ATE-','')}</td><td class="${r[2]>2.5?'hi':''}">${f2(r[2])}</td><td>${r[3]}</td></tr>`).join('');
+$('t_par').innerHTML='<tr><th>WAT 參數</th><th>基準</th><th>10/20 後</th></tr>'+Object.entries(D.par).map(([k,v])=>`<tr><td>${k}</td><td>${v[0]>1000?Math.round(v[0]):v[0]}</td><td>${v[1]>1000?Math.round(v[1]):v[1]}</td></tr>`).join('');
+$('t_lots').innerHTML='<tr><th>Lot</th><th>RUN ON</th><th>Test Date</th><th>WAT %</th><th>CP %</th><th>Gap</th><th>DIR0 %</th><th>BVR(10mA)</th></tr>'+D.postlots.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${f1(r[3])}</td><td>${f2(r[4])}</td><td class="${r[5]>6?'hi':''}">${f2(r[5])}</td><td class="${r[6]>5?'hi':''}">${f2(r[6])}</td><td>${f2(r[7])}</td></tr>`).join('');
+// slides
+const S=[...document.querySelectorAll('.slide')];let cur=0,stageScale=1;
+S.forEach((s,i)=>{const e=document.createElement('div');e.className='foot';e.innerHTML=`<span>15U WAT/CP Yield Gap 分析</span><span>${i+1} / ${S.length}</span>`;if(i)s.appendChild(e)});
+function fit(){stageScale=Math.min(innerWidth/1280,innerHeight/720);$('stage').style.transform=`translate(-50%,-50%) scale(${stageScale})`}
+function go(n){cur=Math.max(0,Math.min(S.length-1,n));S.forEach((s,i)=>s.classList.toggle('on',i==cur));location.hash=cur+1;requestAnimationFrame(render)}
+addEventListener('resize',()=>{fit();render()});
+addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' '].includes(e.key))go(cur+1);else if(['ArrowLeft','PageUp'].includes(e.key))go(cur-1);else if(e.key=='Home')go(0);else if(e.key=='End')go(S.length-1);else if(e.key=='f'||e.key=='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}});
+addEventListener('click',e=>{if(e.clientX>innerWidth/2)go(cur+1);else go(cur-1)});
+fit();go((parseInt(location.hash.slice(1))||1)-1);
+</script>
+</body></html>
