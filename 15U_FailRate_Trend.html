@@ -56,7 +56,7 @@ th:first-child,td:first-child{text-align:left}tbody tr{cursor:pointer}tbody tr:h
   <button class="b" id="clr">清除</button><button class="b" id="pre">預設：IR0 / DIR0 / IR0+DIR0</button></div>
  <div class="chips" id="chips"></div>
  <div id="pick"></div>
- <div class="row" style="margin-top:8px"><span class="lbl">自訂組合（勾選上方 CP 單項後）</span><button class="b" id="mk">＋ 建立組合</button><span class="note">例：勾 VZ0、IR0 → 新增「VZ0+IR0」</span></div>
+ <div class="row" style="margin-top:8px"><span class="lbl">自訂組合（勾選 2 個以上 CP 單項或 WAT site 後）</span><button class="b" id="mk">＋ 建立組合</button><span class="note">例：勾 VZ0、IR0 → 「VZ0+IR0」；勾 WAT #1、#2、#3 → 「WAT #1+#2+#3」</span></div>
 </div>
 
 <div class="card"><div class="cv"><canvas id="cv"></canvas></div><div class="note" id="hint"></div></div>
@@ -79,6 +79,7 @@ reg('All CP bins',{g:'CP 組合',t:'sum',k:BINS});
 EXTRA.forEach(b=>reg(b,{g:'CP AEC-Q / AOI',t:'sum',k:[b]}));
 reg('CP final fail',{g:'整體 yield',t:'mean',f:l=>l.fy==null?null:100-l.fy});
 reg('WAT Yield fail',{g:'WAT fail rate',t:'mean',f:l=>l.wy==null?null:100-l.wy});
+reg('WAT 25 sites 合併',{g:'WAT fail rate',t:'mean',f:l=>{const a=l.sy.filter(v=>v!=null);return a.length?100-a.reduce((x,y)=>x+y,0)/a.length:null}});
 SITES.forEach((s,i)=>reg('WAT '+s,{g:'WAT site fail rate',t:'mean',f:l=>l.sy[i]==null?null:100-l.sy[i]}));
 PARAMS.forEach(p=>reg(p,{g:'WAT 參數平均值（非 fail rate，右軸）',t:'mean',r:1,f:l=>l.p[p]==null?null:l.p[p]}));
 let sel=['IR0','DIR0','IR0+DIR0'],xm='day',so='asc',chart;
@@ -130,7 +131,11 @@ $('chips').onclick=e=>{const x=e.target.dataset.x;if(x){sel=sel.filter(i=>i!==x)
 $('clr').onclick=()=>{sel=[];pick();draw()};
 $('pre').onclick=()=>{sel=['IR0','DIR0','IR0+DIR0'];pick();draw()};
 $('tb').onclick=e=>{const r=e.target.closest('tr');if(!r)return;const id=r.dataset.id;if(!sel.includes(id))sel.push(id);pick();draw()};
-$('mk').onclick=()=>{const k=sel.filter(i=>M[i].t==='sum'&&M[i].k.length===1).map(i=>M[i].k[0]);if(k.length<2){alert('請先勾選至少兩個 CP 單項 bin');return}
+$('mk').onclick=()=>{const ss=sel.filter(i=>i.startsWith('WAT #')&&!i.includes('+'));
+ if(ss.length>=2){const ix=ss.map(s=>SITES.indexOf(s.slice(4))),id='WAT '+ss.map(s=>s.slice(4)).join('+');
+  if(!M[id])reg(id,{g:'WAT 組合',t:'mean',f:l=>{const a=ix.map(i=>l.sy[i]).filter(v=>v!=null);return a.length?100-a.reduce((x,y)=>x+y,0)/a.length:null}});
+  sel=sel.filter(i=>!ss.includes(i));sel.push(id);pick();draw();return}
+ const k=sel.filter(i=>M[i].t==='sum'&&M[i].k.length===1).map(i=>M[i].k[0]);if(k.length<2){alert('請先勾選至少兩個 CP 單項 bin');return}
  const id=k.join('+');if(!M[id])reg(id,{g:'CP 組合',t:'sum',k});sel=sel.filter(i=>!(M[i].t==='sum'&&M[i].k.length===1));sel.push(id);pick();draw()};
 const sts=[...new Set(L.map(l=>l.st))].sort();$('st').innerHTML+=sts.map(s=>`<option>${s}</option>`).join('');
 setSeg('xg',xm);setSeg('sg',so);$('sortw').style.display='none';pick();draw();
