@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CP 測試結果及Site difference 檢驗工具</title>
+<style>
+:root{--bg:#f3f5f7;--panel:#fff;--ink:#17212b;--mute:#667385;--line:#d9dfe6;--acc:#0b6bcb;--bad:#c2410c;--badbg:#ffedd5;--warn:#a16207;--warnbg:#fef3c7;--ok:#2f7d4f;--box:#9db8d6;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f151c;--panel:#18212b;--ink:#e6ebf1;--mute:#93a1b2;--line:#2b3846;--acc:#5aa9f5;--bad:#fb923c;--badbg:#3b2312;--warn:#facc15;--warnbg:#33290c;--ok:#5fc08a;--box:#35597f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f151c;--panel:#18212b;--ink:#e6ebf1;--mute:#93a1b2;--line:#2b3846;--acc:#5aa9f5;--bad:#fb923c;--badbg:#3b2312;--warn:#facc15;--warnbg:#33290c;--ok:#5fc08a;--box:#35597f;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 "Segoe UI","Noto Sans TC","PingFang TC",system-ui,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:20px;margin:0 0 4px}
+.psub{color:var(--mute);margin:0 0 16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;margin-bottom:14px}
+#drop{border:2px dashed var(--line);border-radius:6px;padding:22px;text-align:center;color:var(--mute);cursor:pointer}
+#drop.on{border-color:var(--acc);color:var(--acc)}
+.ctl{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center}
+.ctl label{display:flex;gap:6px;align-items:center}
+input[type=number],select{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:3px 6px;width:76px}
+select{width:auto}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:5px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+th{cursor:pointer;color:var(--mute);font-weight:600;user-select:none}
+th.s{color:var(--acc)}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--bg)}
+tr.sel{outline:2px solid var(--acc);outline-offset:-2px}
+.f{display:inline-block;padding:0 8px;border-radius:10px;font-size:12px}
+.f.hi{background:var(--badbg);color:var(--bad)}.f.mid{background:var(--warnbg);color:var(--warn)}.f.ok{color:var(--ok)}
+#msg{color:var(--mute);margin:8px 0 0}
+#detail h2{font-size:16px;margin:0 0 8px}
+svg{max-width:100%;height:auto;display:block}
+svg text{fill:var(--mute);font-size:11px}
+.note{color:var(--mute);font-size:12px;margin-top:8px}
+.tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.tabs button{font:inherit;background:none;border:0;border-bottom:3px solid transparent;color:var(--mute);padding:8px 14px;cursor:pointer}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--acc);font-weight:600}
+.cbar{display:inline-block;height:8px;border-radius:2px;vertical-align:middle;margin-left:6px;background:var(--bad)}
+.cbar.y{background:var(--box)}
+.scr{max-height:380px;overflow:auto}
+.kv{color:var(--mute);margin:0 0 10px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:6px;display:none;max-width:90%;z-index:20}
+.btn{font:inherit;background:var(--acc);color:var(--panel);border:0;border-radius:4px;padding:5px 12px;cursor:pointer}
+.btn:hover{opacity:.9}
+#wd tr[data-ti]{cursor:pointer}
+#wd tr[data-ti]:hover{background:var(--bg)}
+.hmbox{margin-top:16px;padding-top:12px;border-top:2px solid var(--line)}
+.hmbox .ctl{margin:6px 0}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+
+/* ---- integration ---- */
+[hidden]{display:none!important}
+.toptabs{display:flex;gap:6px;margin:0 0 18px;border-bottom:2px solid var(--line)}
+.toptabs button{font:inherit;font-size:15px;background:none;border:0;border-bottom:4px solid transparent;margin-bottom:-2px;color:var(--mute);padding:10px 18px;cursor:pointer}
+.toptabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--acc);font-weight:700}
+main.wide{max-width:1480px}
+#radial{border-radius:10px;padding:4px 12px 8px;min-height:60vh}
+#radial .wrap{padding:8px 0 24px}
+#radial .brand h1{font-size:19px;margin:0}
+#radial th,#radial td{text-align:left;white-space:normal;cursor:auto}
+#radial th{font-weight:400;user-select:auto}
+#radial tbody tr{cursor:auto}
+#radial tbody tr:hover{background:none}
+#radial tr.sel{outline:none}
+#radial .ctl{flex-wrap:nowrap;align-items:stretch}
+#radial .ctl label{display:block}
+#radial select{width:auto}
+
+#radial{
+  --bg:#0a0e11; --panel:#10161a; --panel2:#131a1f; --line:#1f2b32; --line2:#2a3942;
+  --text:#e9eff3; --mute:#7d8c97; --dim:#55636d; --amber:#f2a33a; --red:#ff6262; --blue:#5ab0ff;
+  --sans:"Space Grotesk","Segoe UI","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,Consolas,"Microsoft JhengHei",monospace;
+}
+#radial *{box-sizing:border-box}
+#radial{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px}
+#radial button,#radial select,#radial input{font:inherit;color:inherit}
+#radial .wrap{max-width:1480px;margin:0 auto;padding:16px 20px 48px}
+#radial .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:6px 0 14px}
+#radial .brand{display:flex;align-items:baseline;gap:12px;margin-right:auto}
+#radial .brand h1{margin:0;font-size:19px;letter-spacing:.2px}
+#radial .brand span{color:var(--mute);font:12px var(--mono)}
+#radial .btn{background:var(--panel2);border:1px solid var(--line2);border-radius:7px;padding:7px 14px;cursor:pointer;font:600 12.5px var(--mono);color:var(--text)}
+#radial .btn:hover{border-color:#44606f;background:#18222a}
+#radial .btn.primary{background:#1c3a4a;border-color:#2f6a86;color:#bfe6ff}
+#radial .btn.primary:hover{background:#21465a}
+#radial .btn:disabled{opacity:.4;cursor:default}
+#radial .controls{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:14px}
+#radial .ctl{display:flex;flex-direction:column;gap:5px;min-width:0}
+#radial .ctl label{font:10.5px var(--mono);letter-spacing:.8px;text-transform:uppercase;color:var(--mute)}
+#radial .ctl select{background:#0d1317;border:1px solid var(--line2);border-radius:7px;padding:7px 10px;font:12.5px var(--mono);max-width:100%;outline:none}
+#radial .ctl select:focus{border-color:var(--blue)}
+#radial .ctl.grow{flex:1 1 360px}
+#radial .ctl.grow select{width:100%}
+#radial .chk{display:flex;align-items:center;gap:6px;font:12px var(--mono);color:var(--mute);padding-bottom:7px;cursor:pointer;user-select:none}
+#radial .chk input{accent-color:var(--blue)}
+#radial details.files{margin:-6px 0 14px;font:12px var(--mono);color:var(--mute)}
+#radial details.files summary{cursor:pointer;padding:4px 2px}
+#radial details.files table{border-collapse:collapse;margin-top:6px;width:100%;max-height:260px}
+#radial details.files .scroll{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+#radial details.files td,#radial details.files th{padding:4px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+#radial details.files th{position:sticky;top:0;background:var(--panel);color:var(--dim);font-weight:400}
+#radial .err{color:#ff9b7a}
+#radial .drop{border:1.5px dashed var(--line2);border-radius:14px;padding:70px 20px;text-align:center;color:var(--mute);cursor:pointer;background:var(--panel);transition:.15s}
+#radial .drop:hover,#radial .drop.over,#radial.dragging .drop{border-color:var(--blue);color:var(--text);background:#111c24}
+#radial .drop b{display:block;font-size:17px;color:var(--text);margin-bottom:8px}
+#radial .drop small{font:12px var(--mono)}
+#radial .prog{font:12px var(--mono);color:var(--blue);margin:0 0 10px;min-height:16px}
+#radial .ahead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 2px 12px}
+#radial .tag{font:700 11px var(--mono);letter-spacing:1.5px;padding:3px 8px;border-radius:5px;color:#10161a}
+#radial .ahead h2{margin:0;font-size:17px}
+#radial .ahead .meta{margin-left:auto;font:12px var(--mono);color:var(--mute)}
+#radial .card{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+#radial .top-card{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px;padding:22px 24px;margin-bottom:16px}
+@media(max-width:1000px){#radial .top-card{grid-template-columns:1fr}}
+#radial .verdict{display:inline-block;font:700 14px var(--sans);padding:9px 15px;border-radius:7px;border:1px solid;margin-bottom:14px}
+#radial .verdict.in{color:var(--amber);border-color:var(--amber);background:rgba(242,163,58,.1)}
+#radial .verdict.out{color:var(--red);border-color:#ff5b5b;background:rgba(255,91,91,.14)}
+#radial .verdict.none{color:var(--mute);border-color:var(--line2);background:#12191e}
+#radial .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:560px){#radial .stats{grid-template-columns:repeat(2,1fr)}}
+#radial .stat{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px 14px}
+#radial .stat .k{font:10.5px var(--mono);letter-spacing:.8px;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+#radial .stat .v{font:700 17px var(--mono)}
+#radial .stat .v small{font-weight:400;color:var(--dim);font-size:12px}
+#radial .note{font:11.5px/1.7 var(--mono);color:var(--mute);margin:12px 0 0}
+#radial table.zt{width:100%;border-collapse:collapse;font:13px var(--mono)}
+#radial .zt th{font:10.5px var(--mono);letter-spacing:.8px;text-transform:uppercase;color:var(--mute);text-align:left;font-weight:400;padding:2px 8px 9px;border-bottom:1px solid var(--line2)}
+#radial .zt td{padding:11px 8px;border-bottom:1px solid var(--line);font-weight:700}
+#radial .zt td.ci{color:var(--mute);font-weight:400}
+#radial .zt td.bar{width:26%}
+#radial .track{height:7px;background:#161f25;border-radius:4px;overflow:hidden}
+#radial .track i{display:block;height:100%;border-radius:4px}
+#radial .charts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media(max-width:1100px){#radial .charts{grid-template-columns:1fr}}
+#radial .chart{padding:16px 16px 10px}
+#radial .chart .ch{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px}
+#radial .chart h3{margin:0;font-size:14.5px}
+#radial .chart .sub{font:12px var(--mono);color:var(--amber);margin-top:3px}
+#radial .png{background:transparent;border:1px solid var(--line2);border-radius:6px;padding:6px 11px;font:11.5px var(--mono);color:var(--blue);cursor:pointer;white-space:nowrap}
+#radial .png:hover{border-color:var(--blue);background:#12202b}
+#radial .chart canvas{width:100%;display:block;margin-top:2px}
+#radial .sect{margin:22px 2px 10px;font:600 12px var(--mono);letter-spacing:.8px;color:var(--mute);text-transform:uppercase}
+#radial .charts.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:1100px){#radial .charts.two{grid-template-columns:1fr}}
+#radial .chart .note{margin:8px 2px 4px;font:11.5px/1.65 var(--mono);color:var(--mute)}
+#radial details.ov{margin-top:18px}
+#radial details.ov summary{cursor:pointer;font:600 13px var(--mono);color:var(--mute);padding:6px 2px}
+#radial details.ov .scroll{overflow:auto;margin-top:8px}
+#radial table.ovt{border-collapse:collapse;width:100%;font:12px var(--mono);min-width:860px}
+#radial .ovt th{font-weight:400;color:var(--mute);font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;text-align:right;padding:8px 10px;border-bottom:1px solid var(--line2);position:sticky;top:0;background:var(--panel)}
+#radial .ovt td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+#radial .ovt th:first-child,#radial .ovt td:first-child{text-align:left}
+#radial .ovt tbody tr{cursor:pointer}
+#radial .ovt tbody tr:hover{background:#151f26}
+#radial .ovt tr.sel{background:#16242d}
+#radial .pill{font-weight:700}
+#radial .pill.in{color:var(--amber)}
+#radial .pill.out{color:var(--red)}
+#radial .pill.none{color:var(--dim)}
+#radial #r_tip{position:fixed;z-index:50;pointer-events:none;background:#0b1115;border:1px solid var(--line2);border-radius:7px;padding:7px 10px;font:11.5px/1.55 var(--mono);color:var(--text);white-space:pre;display:none;box-shadow:0 6px 22px rgba(0,0,0,.5)}
+#radial .empty{padding:50px;text-align:center;color:var(--mute);font:13px var(--mono)}
+</style>
+</head>
+<body>
+<main>
+<div class="toptabs" role="tablist"><button role="tab" id="ttab1" aria-selected="true">CP 測試結果及 Site difference</button><button role="tab" id="ttab2" aria-selected="false">同心圓 Fail 分析</button></div>
+<div id="cp">
+<h1>CP 測試結果及Site difference 檢驗工具</h1>
+<p class="psub">載入 wafer 測試 CSV（可直接放 .zip，含巢狀 zip），快速找出各測項中 site 間差異過大的項目。資料只在瀏覽器內處理，不會上傳。</p>
+
+<div class="panel">
+ <div id="drop" tabindex="0" role="button">把 .csv / .zip 拖到這裡，或點擊選檔</div>
+ <input id="file" type="file" multiple accept=".csv,.zip" hidden>
+ <p id="msg"></p>
+</div>
+
+<div class="tabs" role="tablist"><button role="tab" id="tab1" aria-selected="true">Site difference</button><button role="tab" id="tab2" aria-selected="false">Wafer 良率 / 測項 fail rate</button></div>
+<div id="v1">
+<div class="panel ctl" id="ctl" hidden>
+ <label>Lot <select id="lot"></select></label>
+ <label><input type="checkbox" id="b1"> 只算 Bin1 good die</label>
+ <label>Δ/σ 門檻 <input type="number" id="t1" value="0.5" step="0.1" min="0"></label>
+ <label>Δ/Spec 門檻 % <input type="number" id="t2" value="5" step="1" min="0"></label>
+ <label><input type="checkbox" id="only"> 只顯示超標項目</label>
+</div>
+
+<div class="panel" id="res" hidden>
+ <div style="text-align:right;margin-bottom:8px"><button class="btn" id="xs">匯出 Excel</button></div>
+ <div class="tw"><table id="tb"><thead></thead><tbody></tbody></table></div>
+ <p class="note">Δ = 各 site 中位數的最大值減最小值；σ = site 內合併標準差；Δ/Spec = Δ 除以 (上限 − 下限)；η² = site 造成的變異佔總變異比例。點選任一列看各 site 的 box plot。</p>
+</div>
+
+<div class="panel" id="detail" hidden></div>
+</div>
+
+<div id="v2" hidden>
+ <div class="panel">
+  <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start"><p class="kv" id="wsum">請先載入資料。</p><button class="btn" id="xw">匯出 Excel</button></div>
+  <div class="tw scr"><table id="wt"><thead><tr><th class="l">#</th><th class="l">Wafer</th><th>Die 數</th><th>Pass (Bin1)</th><th>Fail</th><th>良率 %（低 → 高）</th></tr></thead><tbody></tbody></table></div>
+  <p class="note">良率 = Bin1 die 數 ÷ 該片 wafer 全部 die 數，由低到高排列。點選任一片 wafer 看各測項 failure rate。</p>
+ </div>
+ <div class="panel" id="wd" hidden></div>
+</div>
+</div>
+<div id="radial" hidden>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><h1>同心圓 Fail 分析</h1><span>LLD (RK#####) / ULLD (RP#####) · dlogTDO csv / zip</span></div>
+    <button class="btn primary" id="r_btnPick">匯入 CSV / ZIP</button>
+    <button class="btn" id="r_btnClear" disabled>清除</button>
+    <input type="file" id="r_file" multiple accept=".csv,.txt,.zip" hidden>
+  </div>
+  <div class="prog" id="r_prog"></div>
+
+  <div class="controls" id="r_controls" hidden>
+    <div class="ctl"><label for="r_selProd">產品</label><select id="r_selProd"></select></div>
+    <div class="ctl"><label for="r_selLot">Lot</label><select id="r_selLot"></select></div>
+    <div class="ctl grow"><label for="r_selTest">測項</label><select id="r_selTest"></select></div>
+    <div class="ctl"><label for="r_selMode">Fail 判定</label>
+      <select id="r_selMode">
+        <option value="first">首個 fail 測項(Bin 歸屬,同附圖)</option>
+        <option value="any">任何超規格(不論前序是否已 fail)</option>
+      </select></div>
+    <label class="chk"><input type="checkbox" id="r_chkHide" checked>隱藏無 fail 測項</label>
+    <label class="chk"><input type="checkbox" id="r_chkDedup" checked>重複 Wafer 只留最新</label>
+    <label class="chk"><input type="checkbox" id="r_chkFlip">Y 軸翻轉</label>
+  </div>
+  <details class="files" id="r_filesBox" hidden><summary id="r_filesSum"></summary><div class="scroll"><table id="r_filesTbl"></table></div></details>
+
+  <main id="r_main">
+    <div class="drop" id="r_drop"><b>拖曳 CSV / ZIP 到此,或點擊選取檔案(可多選)</b>
+      <small>支援 .csv、.zip(可含多個 csv,亦可巢狀 zip) · 資料只在瀏覽器本機處理,不會上傳</small></div>
+  </main>
+</div>
+<div id="r_tip"></div>
+</div>
+<div id="toast" role="status"></div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+let D=null, rows=[], sortKey='score', sortDir=-1, selTest=null;
+
+/* ---------- parsing ---------- */
+function splitLine(l){
+  if(l.indexOf('"')<0) return l.split(',');
+  const o=[];let c='',q=false;
+  for(let i=0;i<l.length;i++){const ch=l[i];
+    if(ch==='"'){ if(q&&l[i+1]==='"'){c+='"';i++} else q=!q }
+    else if(ch===','&&!q){o.push(c);c=''} else c+=ch }
+  o.push(c);return o;
+}
+const num=s=>{if(s==null||s==='')return NaN;const v=+s;return isFinite(v)?v:NaN};
+function parseCSV(text,store){
+  const L=text.split(/\r?\n/);
+  let hi=-1;
+  for(let i=0;i<L.length&&i<80;i++){ if(/^"?Serial#/.test(L[i])){hi=i;break} }
+  if(hi<0) return false;
+  /* 版面：[測項名][單位][空白][上限][下限][Serial# 標題列]；不依賴固定的第一個測項名稱 */
+  const isName=c=>c.length>7&&c.slice(0,6).every(x=>!x.trim())&&(c[6]||'').trim()!==''&&isNaN(+c[6]);
+  let ni=hi-5;
+  if(ni<0||!isName(splitLine(L[ni]))){
+    ni=-1;
+    for(let i=hi-1;i>=Math.max(0,hi-12);i--){ if(isName(splitLine(L[i]))){ni=i;break} }
+  }
+  if(ni<0) return false;
+  const names=splitLine(L[ni]).map(s=>s.trim());
+  const units=splitLine(L[ni+1]||'');
+  const hiL=splitLine(L[hi-2]||''), loL=splitLine(L[hi-1]||'');
+  const w=(L.slice(0,30).join('\n').match(/Wafer ID\s*:?\s*([^\s,"]+)/i)||[])[1]||('wafer'+store.nw);
+  const lot=w.split('-')[0];
+  store.nw++;
+  for(let i=6;i<names.length;i++){
+    if(!names[i]) continue;
+    let t=store.tests.find(x=>x.name===names[i]);
+    if(!t){t={name:names[i],unit:(units[i]||'').trim(),hi:num(hiL[i]),lo:num(loL[i]),vals:[]};store.tests.push(t)}
+    t.idx=t.idx||{};t.idx[w]=i;
+  }
+  const start=store.site.length;
+  const cols=[];
+  for(let r=hi+1;r<L.length;r++){
+    const l=L[r]; if(!l||l.charCodeAt(0)<48||l.charCodeAt(0)>57) continue;
+    const c=splitLine(l);
+    store.site.push(+c[1]);store.bin.push(+c[2]);store.lot.push(lot);store.wafer.push(w);store.x.push(+c[4]);store.y.push(+c[5]);
+    cols.push(c);
+  }
+  for(const t of store.tests){
+    const i=t.idx&&t.idx[w];
+    while(t.vals.length<start) t.vals.push(NaN);
+    for(const c of cols) t.vals.push(i==null?NaN:num(c[i]));
+  }
+  return true;
+}
+async function readEntry(name,getBuf,store){
+  if(/\.zip$/i.test(name)){
+    const z=await JSZip.loadAsync(await getBuf());
+    for(const n of Object.keys(z.files)){ const f=z.files[n]; if(!f.dir && !/__MACOSX/.test(n)) await readEntry(n,()=>f.async('arraybuffer'),store) }
+  } else if(/\.csv$/i.test(name)){
+    const ok=parseCSV(new TextDecoder('windows-1252').decode(await getBuf()),store);
+    if(ok) store.files++; else store.skipped.push(name);
+  }
+}
+async function load(files){
+  $('msg').textContent='解析中…';
+  const store={tests:[],site:[],bin:[],lot:[],wafer:[],x:[],y:[],nw:0,files:0,skipped:[]};
+  try{
+    for(const f of files) await readEntry(f.name,()=>f.arrayBuffer(),store);
+  }catch(e){ $('msg').textContent='讀檔失敗：'+e.message; return }
+  if(!store.files){ $('msg').textContent='找不到可辨識的測試 CSV（需含 Serial# 標題列，且其上方有測項名稱列）。'; return }
+  for(const t of store.tests) while(t.vals.length<store.site.length) t.vals.push(NaN);
+  D=store;
+  const lots=[...new Set(D.lot)].sort();
+  $('lot').innerHTML='<option value="">全部 ('+lots.length+' lots)</option>'+lots.map(x=>`<option>${x}</option>`).join('');
+  $('msg').textContent=`已載入 ${D.files} 個檔案、${D.nw} 片 wafer、${D.site.length.toLocaleString()} 顆 die、${D.tests.length} 個測項`+(D.skipped.length?`；略過 ${D.skipped.length} 個無法辨識的檔案`:'');
+  ['ctl','res'].forEach(i=>$(i).hidden=false);
+  selTest=null;$('detail').hidden=true;
+  analyze();wafers();
+}
+
+/* ---------- stats ---------- */
+function q(a,p){const i=(a.length-1)*p,f=Math.floor(i),c=Math.ceil(i);return a[f]+(a[c]-a[f])*(i-f)}
+function siteStats(t,mask){
+  const g={};
+  for(let i=0;i<t.vals.length;i++){ const v=t.vals[i]; if(v!==v||!mask(i)) continue; (g[D.site[i]]=g[D.site[i]]||[]).push(v) }
+  const out=[];
+  for(const s of Object.keys(g).map(Number).sort((a,b)=>a-b)){
+    const a=g[s].sort((x,y)=>x-y), n=a.length, m=a.reduce((x,y)=>x+y,0)/n;
+    const sd=n>1?Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/(n-1)):0;
+    const med=q(a,.5),q1=q(a,.25),q3=q(a,.75),iqr=q3-q1;
+    const wl=a.find(v=>v>=q1-1.5*iqr),wh=[...a].reverse().find(v=>v<=q3+1.5*iqr);
+    let f=0; if(t.lo===t.lo||t.hi===t.hi) for(const v of a) if((t.lo===t.lo&&v<t.lo)||(t.hi===t.hi&&v>t.hi)) f++;
+    out.push({site:s,n,mean:m,sd,med,q1,q3,wl,wh,f});
+  }
+  return out;
+}
+function analyze(){
+  const lot=$('lot').value, b1=$('b1').checked;
+  const mask=i=>(!lot||D.lot[i]===lot)&&(!b1||D.bin[i]===1);
+  rows=[];
+  for(const t of D.tests){
+    const st=siteStats(t,mask).filter(s=>s.n>=5);
+    if(st.length<2) continue;
+    const N=st.reduce((x,s)=>x+s.n,0);
+    const meds=st.map(s=>s.med), delta=Math.max(...meds)-Math.min(...meds);
+    const dof=N-st.length, sp=dof>0?Math.sqrt(st.reduce((x,s)=>x+(s.n-1)*s.sd*s.sd,0)/dof):0;
+    const gm=st.reduce((x,s)=>x+s.mean*s.n,0)/N;
+    const ssb=st.reduce((x,s)=>x+s.n*(s.mean-gm)**2,0), ssw=st.reduce((x,s)=>x+(s.n-1)*s.sd*s.sd,0);
+    const spec=(t.hi===t.hi&&t.lo===t.lo&&t.hi>t.lo)?t.hi-t.lo:NaN;
+    const score=sp>0?delta/sp:(delta>0?999:0);
+    const mean=meds.reduce((x,y)=>x+y,0)/meds.length;
+    let worst=st[0]; for(const s of st) if(Math.abs(s.med-mean)>Math.abs(worst.med-mean)) worst=s;
+    rows.push({t,st,N,delta,sp,score,specPct:spec===spec?delta/spec*100:NaN,eta:ssb+ssw>0?ssb/(ssb+ssw):0,worst:worst.site,off:worst.med-mean});
+  }
+  render();
+}
+
+/* ---------- table ---------- */
+const COLS=[['name','測項','l'],['N','N'],['worst','偏離最大 site'],['off','該 site 偏移'],['delta','Δ'],['sp','σ(site 內)'],['score','Δ/σ'],['specPct','Δ/Spec %'],['eta','η²'],['flag','判定']];
+const fmt=v=>v!==v?'–':(v===0?'0':Math.abs(v)>=1000||Math.abs(v)<0.001?v.toExponential(2):(+v.toPrecision(4)).toString());
+function level(r){
+  const a=+$('t1').value,b=+$('t2').value;
+  const x=r.score>=a*2||(r.specPct===r.specPct&&r.specPct>=b*2), y=r.score>=a||(r.specPct===r.specPct&&r.specPct>=b);
+  return x?2:(y?1:0);
+}
+function render(){
+  const th=$('tb').tHead; th.innerHTML='<tr>'+COLS.map(c=>`<th class="${c[2]||''} ${sortKey===c[0]?'s':''}" data-k="${c[0]}">${c[1]}${sortKey===c[0]?(sortDir>0?' ▲':' ▼'):''}</th>`).join('')+'</tr>';
+  rows.forEach(r=>{r.name=r.t.name;r.flag=level(r)});
+  let v=rows.filter(r=>!$('only').checked||r.flag>0);
+  v.sort((a,b)=>{const x=a[sortKey],y=b[sortKey];const nx=x!==x,ny=y!==y;if(nx||ny)return nx-ny;return (typeof x==='string'?x.localeCompare(y):x-y)*sortDir});
+  $('tb').tBodies[0].innerHTML=v.map(r=>`<tr data-n="${r.name.replace(/"/g,'&quot;')}" class="${selTest===r.name?'sel':''}"><td class="l">${r.name}${r.t.unit&&r.t.unit.length<=10?` <span style="color:var(--mute)">(${r.t.unit})</span>`:''}</td><td>${r.N}</td><td>Site ${r.worst}</td><td>${(r.off>0?'+':'')+fmt(r.off)}</td><td>${fmt(r.delta)}</td><td>${fmt(r.sp)}</td><td>${r.score>=999?'∞':r.score.toFixed(2)}</td><td>${r.specPct===r.specPct?r.specPct.toFixed(1):'–'}</td><td>${r.eta.toFixed(3)}</td><td><span class="f ${['ok','mid','hi'][r.flag]}">${['正常','注意','過大'][r.flag]}</span></td></tr>`).join('')||'<tr><td class="l" colspan="10">沒有符合條件的測項</td></tr>';
+  const n=rows.filter(r=>r.flag>0).length; $('res').querySelector('.note').dataset.n=n;
+  if(selTest) detail(selTest);
+}
+
+/* ---------- detail box plot ---------- */
+function detail(name){
+  selTest=name;
+  const r=rows.find(x=>x.t.name===name); if(!r){$('detail').hidden=true;return}
+  const t=r.t, st=r.st;
+  let lo=Math.min(...st.map(s=>s.wl)), hi=Math.max(...st.map(s=>s.wh));
+  const span=(hi-lo)||Math.abs(hi)||1;
+  const lines=[]; for(const [v,l] of [[t.lo,'LSL'],[t.hi,'USL']]) if(v===v&&v>=lo-span*3&&v<=hi+span*3){lines.push([v,l]);lo=Math.min(lo,v);hi=Math.max(hi,v)}
+  const pad=(hi-lo)*.08||1; lo-=pad;hi+=pad;
+  const W=Math.max(520,st.length*70+90),H=280,L=62,R=14,T=14,B=34, pw=(W-L-R)/st.length;
+  const y=v=>T+(H-T-B)*(1-(v-lo)/(hi-lo));
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${name} 各 site box plot">`;
+  for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4;s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${fmt(v)}</text>`}
+  for(const [v,l] of lines) s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--bad)" stroke-dasharray="5 4"/><text x="${W-R}" y="${y(v)-3}" text-anchor="end" style="fill:var(--bad)">${l} ${fmt(v)}</text>`;
+  const gm=r.st.map(x=>x.med).reduce((a,b)=>a+b,0)/st.length;
+  s+=`<line x1="${L}" x2="${W-R}" y1="${y(gm)}" y2="${y(gm)}" stroke="var(--acc)" stroke-dasharray="2 3"/>`;
+  st.forEach((o,i)=>{const cx=L+pw*(i+.5),bw=Math.min(34,pw*.55),bad=o.site===r.worst;
+    s+=`<line x1="${cx}" x2="${cx}" y1="${y(o.wl)}" y2="${y(o.wh)}" stroke="var(--mute)"/><rect x="${cx-bw/2}" y="${y(o.q3)}" width="${bw}" height="${Math.max(1,y(o.q1)-y(o.q3))}" fill="${bad?'var(--bad)':'var(--box)'}" fill-opacity="${bad?.55:.8}" stroke="var(--mute)"/><line x1="${cx-bw/2}" x2="${cx+bw/2}" y1="${y(o.med)}" y2="${y(o.med)}" stroke="var(--ink)" stroke-width="2"/><text x="${cx}" y="${H-16}" text-anchor="middle">Site ${o.site}</text><text x="${cx}" y="${H-3}" text-anchor="middle">n=${o.n}</text>`});
+  s+='</svg>';
+  const tab=`<div class="tw"><table><thead><tr><th>Site</th><th>N</th><th>中位數</th><th>平均</th><th>σ</th><th>與全 site 中位數均值差</th><th>超出 spec 顆數</th></tr></thead><tbody>${st.map(o=>`<tr><td>Site ${o.site}</td><td>${o.n}</td><td>${fmt(o.med)}</td><td>${fmt(o.mean)}</td><td>${fmt(o.sd)}</td><td>${(o.med-gm>0?'+':'')+fmt(o.med-gm)}</td><td>${o.f}</td></tr>`).join('')}</tbody></table></div>`;
+  $('detail').hidden=false;
+  $('detail').innerHTML=`<h2>${name}${t.unit?' ('+t.unit+')':''}</h2>${s}<p class="note">方塊 = Q1~Q3，黑線 = 中位數，鬚 = 1.5 IQR 內最遠值，藍虛線 = 各 site 中位數均值，橘色方塊 = 偏離最大的 site。</p>${tab}`;
+}
+
+/* ---------- wafer yield view ---------- */
+let WL=[],selW=null;
+function wafers(){
+  const m={};
+  for(let i=0;i<D.site.length;i++){const w=D.wafer[i];const o=m[w]||(m[w]={w,lot:D.lot[i],n:0,p:0,idx:[]});o.n++;if(D.bin[i]===1)o.p++;o.idx.push(i)}
+  WL=Object.values(m);WL.forEach(o=>o.y=o.p/o.n*100);
+  WL.sort((a,b)=>a.y-b.y||a.w.localeCompare(b.w));
+  const tn=WL.reduce((x,o)=>x+o.n,0),tp=WL.reduce((x,o)=>x+o.p,0);
+  $('wsum').textContent=`共 ${WL.length} 片 wafer，整體良率 ${(tp/tn*100).toFixed(2)}%（最低 ${WL[0].w}：${WL[0].y.toFixed(2)}%，最高 ${WL[WL.length-1].w}：${WL[WL.length-1].y.toFixed(2)}%）`;
+  $('wt').tBodies[0].innerHTML=WL.map((o,i)=>`<tr data-w="${o.w}" class="${selW===o.w?'sel':''}"><td class="l">${i+1}</td><td class="l">${o.w}</td><td>${o.n}</td><td>${o.p}</td><td>${o.n-o.p}</td><td>${o.y.toFixed(2)}<span class="cbar y" style="width:${o.y*0.8}px"></span></td></tr>`).join('');
+  $('wd').hidden=true;selW=null;
+}
+function wtests(o){
+  const R=[];
+  for(const t of D.tests){
+    const hasL=t.lo===t.lo,hasH=t.hi===t.hi; if(!hasL&&!hasH) continue;
+    let tested=0,f=0;
+    for(const i of o.idx){const v=t.vals[i];if(v!==v)continue;tested++;if((hasL&&v<t.lo)||(hasH&&v>t.hi))f++}
+    if(!tested) continue;
+    R.push({t,tested,f,rate:f/o.n*100,rt:f/tested*100});
+  }
+  R.sort((a,b)=>b.rate-a.rate||b.rt-a.rt);
+  return R;
+}
+function wdetail(w){
+  selW=w;
+  const o=WL.find(x=>x.w===w);
+  const bins={};o.idx.forEach(i=>bins[D.bin[i]]=(bins[D.bin[i]]||0)+1);
+  const bs=Object.entries(bins).sort((a,b)=>b[1]-a[1]).map(([b,c])=>`Bin${b}: ${c}`).join('、');
+  const R=wtests(o);
+  const mx=Math.max(...R.map(r=>r.rate),0.01);
+  $('wd').hidden=false;
+  $('wd').innerHTML=`<h2 style="font-size:16px;margin:0 0 4px">${w}</h2><p class="kv">良率 ${o.y.toFixed(2)}%（${o.p} / ${o.n}）；Bin 分布：${bs}</p><div class="tw"><table><thead><tr><th class="l">#</th><th class="l">測項</th><th>Spec (LSL ~ USL)</th><th>測試 die 數</th><th>Fail 數</th><th>Fail rate %（÷ 全 die，大 → 小）</th><th>Fail ÷ 測試 die %</th></tr></thead><tbody>${R.map((r,i)=>`<tr data-ti="${D.tests.indexOf(r.t)}" class="${selT===D.tests.indexOf(r.t)?'sel':''}"><td class="l">${i+1}</td><td class="l">${r.t.name}</td><td>${fmt(r.t.lo)} ~ ${fmt(r.t.hi)}</td><td>${r.tested}</td><td>${r.f}</td><td>${r.rate.toFixed(2)}${r.f?`<span class="cbar" style="width:${r.rate/mx*120}px"></span>`:''}</td><td>${r.rt.toFixed(2)}</td></tr>`).join('')}</tbody></table></div><p class="note">Fail = 測量值超出該測項的 LSL / USL；只計有量測值的 die。沒有 spec limit 的測項不列入。排序依「Fail 數 ÷ 該片 wafer 全部 die」，避免只有少數 die 測到的項目被放大。</p><div class="hmbox" id="hm"><p class="kv">↓ 點選上方任一測項，這裡會顯示該測項在這片 wafer 的 die map heatmap。</p></div>`;
+  [...$('wt').tBodies[0].rows].forEach(r=>r.classList.toggle('sel',r.dataset.w===w));
+  if(selT!=null)hm();
+}
+$('wt').tBodies[0].addEventListener('click',e=>{const tr=e.target.closest('tr');if(!tr||!tr.dataset.w)return;wdetail(tr.dataset.w);$('wd').scrollIntoView({behavior:'smooth',block:'nearest'})});
+function tab(n){$('v1').hidden=n!==1;$('v2').hidden=n!==2;$('tab1').setAttribute('aria-selected',n===1);$('tab2').setAttribute('aria-selected',n===2)}
+$('tab1').onclick=()=>tab(1);$('tab2').onclick=()=>tab(2);
+
+/* ---------- heatmap ---------- */
+let selT=null,hmMode='val',hmFlip=false,hmVal=true,hmSite=false;
+const vf=v=>Math.abs(v)>=100?v.toFixed(0):Math.abs(v)>=10?v.toFixed(1):v.toFixed(2);
+function rampA(f){
+  const s=[[49,104,193],[64,176,166],[246,214,76],[214,69,50]];
+  f=Math.max(0,Math.min(1,f));
+  const p=f*(s.length-1),i=Math.min(s.length-2,Math.floor(p)),u=p-i;
+  return s[i].map((c,k)=>Math.round(c+(s[i+1][k]-c)*u));
+}
+function ramp(f){return 'rgb('+rampA(f).join(',')+')'}
+function hm(){
+  const box=$('hm'); if(!box||selT==null) return;
+  const o=WL.find(x=>x.w===selW),t=D.tests[selT];
+  const hasL=t.lo===t.lo,hasH=t.hi===t.hi;
+  const pts=o.idx.map(i=>({x:D.x[i],y:D.y[i],v:t.vals[i],s:D.site[i],b:D.bin[i]}));
+  const vs=pts.map(p=>p.v).filter(v=>v===v).sort((a,b)=>a-b);
+  if(!vs.length){box.innerHTML='<p class="kv">此測項在這片 wafer 沒有量測值。</p>';return}
+  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);
+  const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  const lo=q(vs,.02),hi=q(vs,.98),span=(hi-lo)||1;
+  const c=Math.max(8,Math.min(28,Math.floor(780/(x1-x0+1)))),M=30,W=M+(x1-x0+1)*c+10,H=M+(y1-y0+1)*c+46;
+  const isF=v=>v===v&&((hasL&&v<t.lo)||(hasH&&v>t.hi));
+  let nf=0,s='';
+  for(const p of pts){
+    const f=isF(p.v); if(f)nf++;
+    const px=M+(p.x-x0)*c,py=M+(hmFlip?(y1-p.y):(p.y-y0))*c;
+    let fill='var(--line)',tc='var(--ink)';
+    if(p.v===p.v){ if(hmMode==='pf') fill=f?'var(--bad)':'var(--box)'; else {const a=rampA((p.v-lo)/span);fill=`rgb(${a})`;tc=(0.299*a[0]+0.587*a[1]+0.114*a[2])>150?'#111':'#fff'} }
+    s+=`<rect x="${px}" y="${py}" width="${c-1}" height="${c-1}" fill="${fill}"${hmMode==='val'&&f?' stroke="var(--ink)" stroke-width="1.5"':''}><title>(${p.x}, ${p.y}) Site ${p.s}, Bin ${p.b}, ${p.v===p.v?fmt(p.v):'未測'}</title></rect>`;
+    if(hmSite){const both=hmVal&&p.v===p.v,lb='S'+p.s,f2=both?7:Math.min(11,(c-2)/(0.58*lb.length));if(f2>=5&&(!both||c>=18))s+=`<text x="${both?px+2:px+(c-1)/2}" y="${both?py+8:py+(c-1)/2+f2*0.35}" text-anchor="${both?'start':'middle'}" style="fill:${tc};font-size:${f2}px;pointer-events:none;${both?'opacity:.8':''}">${lb}</text>`}
+    if(hmVal&&p.v===p.v){const tx=vf(p.v),fs=Math.min(11,(c-2)/(0.58*tx.length));if(fs>=6)s+=`<text x="${px+(c-1)/2}" y="${py+(c-1)/2+fs*0.35}" text-anchor="middle" style="fill:${tc};font-size:${fs}px;pointer-events:none">${tx}</text>`}
+  }
+  for(let x=x0;x<=x1;x++) if(x%5===0) s+=`<text x="${M+(x-x0)*c+c/2}" y="${M-6}" text-anchor="middle">${x}</text>`;
+  for(let y=y0;y<=y1;y++) if(y%5===0) s+=`<text x="${M-5}" y="${M+(hmFlip?(y1-y):(y-y0))*c+c*0.75}" text-anchor="end">${y}</text>`;
+  const ly=H-30;
+  if(hmMode==='val'){
+    s+=`<defs><linearGradient id="lg">${[0,.33,.67,1].map(f=>`<stop offset="${f}" stop-color="${ramp(f)}"/>`).join('')}</linearGradient></defs><rect x="${M}" y="${ly}" width="200" height="10" fill="url(#lg)"/><text x="${M}" y="${ly+22}">${fmt(lo)}</text><text x="${M+200}" y="${ly+22}" text-anchor="end">${fmt(hi)}</text><text x="${M+210}" y="${ly+9}">色階取 2%~98% 分位；黑框 = 超出 spec</text>`;
+  } else s+=`<rect x="${M}" y="${ly}" width="10" height="10" fill="var(--box)"/><text x="${M+14}" y="${ly+9}">Pass</text><rect x="${M+60}" y="${ly}" width="10" height="10" fill="var(--bad)"/><text x="${M+74}" y="${ly+9}">Fail</text><rect x="${M+120}" y="${ly}" width="10" height="10" fill="var(--line)"/><text x="${M+134}" y="${ly+9}">未測</text>`;
+  box.innerHTML=`<h3 style="font-size:15px;margin:0 0 4px">Heatmap：${t.name} — ${selW}</h3><p class="kv">Spec ${fmt(t.lo)} ~ ${fmt(t.hi)}；測試 ${vs.length} 顆，超出 spec ${nf} 顆</p><div class="ctl"><label>顯示 <select id="hmm"><option value="val"${hmMode==='val'?' selected':''}>數值色階</option><option value="pf"${hmMode==='pf'?' selected':''}>Pass / Fail</option></select></label><label><input type="checkbox" id="hmf"${hmFlip?' checked':''}> Y 軸反向</label><label><input type="checkbox" id="hmv"${hmVal?' checked':''}> 顯示數值</label><label><input type="checkbox" id="hms"${hmSite?' checked':''}> 顯示 Site#</label></div><div class="tw"><svg viewBox="0 0 ${W} ${H}" style="min-width:${Math.min(W,420)}px" role="img" aria-label="${t.name} die map">${s}</svg></div>`;
+  $('hmm').onchange=e=>{hmMode=e.target.value;hm()};
+  $('hmf').onchange=e=>{hmFlip=e.target.checked;hm()};
+  $('hmv').onchange=e=>{hmVal=e.target.checked;hm()};
+  $('hms').onchange=e=>{hmSite=e.target.checked;hm()};
+}
+$('wd').addEventListener('click',e=>{
+  const tr=e.target.closest('tr[data-ti]'); if(!tr) return;
+  selT=+tr.dataset.ti;
+  $('wd').querySelectorAll('tr[data-ti]').forEach(r=>r.classList.toggle('sel',r===tr));
+  hm(); $('hm').scrollIntoView({behavior:'smooth',block:'nearest'});
+});
+
+/* ---------- Excel export ---------- */
+function sheet(a){
+  const ws=XLSX.utils.aoa_to_sheet(a),w=[];
+  a.forEach(r=>r.forEach((v,i)=>{w[i]=Math.max(w[i]||8,Math.min(40,String(v==null?'':v).length+2))}));
+  ws['!cols']=w.map(x=>({wch:x}));return ws;
+}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.display='none',6000)}
+window.addEventListener('error',e=>toast('發生錯誤：'+e.message));
+async function saveX(wb,name){
+  const $=id=>id==='msg'?{set textContent(v){toast(v)}}:document.getElementById(id);
+  toast('產生 Excel 中…');
+  if(typeof XLSX==='undefined'){$('msg').textContent='Excel 元件載入失敗，請確認網路後重新整理。';return}
+  const dl=(typeof claude!=='undefined'&&claude.use)?await claude.use('downloads'):null;
+  if(!dl){
+    try{const b=new Blob([XLSX.write(wb,{type:'array',bookType:'xlsx'})],{type:'application/octet-stream'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();
+      $('msg').textContent='無法使用 claude.ai 下載功能，已改用瀏覽器下載 '+name+'。若沒有檔案出現，表示此環境阻擋下載，請在 claude.ai 內用登入帳號開啟。'}
+    catch(e){$('msg').textContent='此環境不支援下載 Excel：'+e.message}
+    return}
+  try{await dl.save({filename:name,data:XLSX.write(wb,{type:'array',bookType:'xlsx'})});$('msg').textContent='已匯出 '+name}
+  catch(e){if(!e||e.code!=='declined')$('msg').textContent='匯出失敗：'+((e&&e.message)||e)}
+}
+const r4=v=>v===v?+(+v).toFixed(4):'';
+$('xs').onclick=()=>{
+  if(!D||!rows.length) return;
+  const lot=$('lot').value||'ALL',v=[...rows].sort((a,b)=>b.score-a.score);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,sheet([['測項','單位','LSL','USL','N','偏離最大 site','該 site 偏移','Δ (中位數 max-min)','σ (site 內)','Δ/σ','Δ/Spec %','η²','判定']].concat(v.map(r=>[r.t.name,r.t.unit,r4(r.t.lo),r4(r.t.hi),r.N,'Site '+r.worst,r4(r.off),r4(r.delta),r4(r.sp),r.score>=999?'inf':r4(r.score),r4(r.specPct),r4(r.eta),['正常','注意','過大'][r.flag]]))),'Site_Difference');
+  const st=[['測項','Site','N','中位數','平均','σ','Q1','Q3','鬚下限','鬚上限','超出 spec 顆數']];
+  v.forEach(r=>r.st.forEach(o=>st.push([r.t.name,'Site '+o.site,o.n,r4(o.med),r4(o.mean),r4(o.sd),r4(o.q1),r4(o.q3),r4(o.wl),r4(o.wh),o.f])));
+  XLSX.utils.book_append_sheet(wb,sheet(st),'Site_Stats');
+  XLSX.utils.book_append_sheet(wb,sheet([['項目','設定'],['Lot',lot],['只算 Bin1 good die',$('b1').checked?'是':'否'],['Δ/σ 門檻',+$('t1').value],['Δ/Spec 門檻 %',+$('t2').value],['說明','Δ = 各 site 中位數最大值減最小值；σ = site 內合併標準差；η² = site 解釋的變異比例']]),'Info');
+  saveX(wb,`site_difference_${lot}.xlsx`);
+};
+$('xw').onclick=()=>{
+  if(!D||!WL.length) return;
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,sheet([['#','Wafer','Lot','Die 數','Pass (Bin1)','Fail','良率 %']].concat(WL.map((o,i)=>[i+1,o.w,o.lot,o.n,o.p,o.n-o.p,r4(o.y)]))),'Wafer_Yield');
+  const L=[['Wafer','測項','LSL','USL','測試 die 數','Fail 數','Fail rate % (÷ 全 die)','Fail ÷ 測試 die %']],M=new Map();
+  const names=D.tests.filter(t=>t.lo===t.lo||t.hi===t.hi).map(t=>t.name);
+  for(const o of WL){const R=wtests(o);R.forEach(r=>L.push([o.w,r.t.name,r4(r.t.lo),r4(r.t.hi),r.tested,r.f,r4(r.rate),r4(r.rt)]));M.set(o.w,new Map(R.map(r=>[r.t.name,r4(r.rate)])))}
+  XLSX.utils.book_append_sheet(wb,sheet(L),'Fail_Rate_Long');
+  XLSX.utils.book_append_sheet(wb,sheet([['Wafer（Fail rate %）'].concat(names)].concat(WL.map(o=>[o.w].concat(names.map(n=>M.get(o.w).has(n)?M.get(o.w).get(n):''))))),'Fail_Rate_Matrix');
+  if(selW&&selT!=null){
+    const o=WL.find(x=>x.w===selW),t=D.tests[selT],hasL=t.lo===t.lo,hasH=t.hi===t.hi;
+    const dm=[[`${selW} / ${t.name}`,'','','','',''],['X','Y','Site','Bin','值','結果']];
+    o.idx.forEach(i=>{const v=t.vals[i];dm.push([D.x[i],D.y[i],D.site[i],D.bin[i],r4(v),v!==v?'未測':((hasL&&v<t.lo)||(hasH&&v>t.hi)?'Fail':'Pass')])});
+    XLSX.utils.book_append_sheet(wb,sheet(dm),'Heatmap_DieMap');
+  }
+  saveX(wb,'wafer_yield_fail_rate.xlsx');
+};
+
+/* ---------- events ---------- */
+const drop=$('drop');
+drop.onclick=()=>$('file').click();
+drop.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('file').click()}};
+$('file').onchange=e=>load([...e.target.files]);
+['dragover','dragenter'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.add('on')}));
+['dragleave','drop'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.remove('on')}));
+drop.addEventListener('drop',e=>load([...e.dataTransfer.files]));
+['lot','b1'].forEach(i=>$(i).onchange=analyze);
+['t1','t2','only'].forEach(i=>$(i).oninput=render);
+$('tb').tHead.addEventListener('click',e=>{const k=e.target.closest('th')?.dataset.k;if(!k)return;sortDir=sortKey===k?-sortDir:-1;sortKey=k;render()});
+$('tb').tBodies[0].addEventListener('click',e=>{const tr=e.target.closest('tr');if(!tr||!tr.dataset.n)return;selTest=tr.dataset.n;render();$('detail').scrollIntoView({behavior:'smooth',block:'nearest'})});
+</script>
+<script>
+(function(){
+'use strict';
+const ROOT=document.getElementById('radial');
+
+/* ====================== utils ====================== */
+const SANS='"Space Grotesk","Segoe UI","Microsoft JhengHei",system-ui,sans-serif';
+const MONO='"JetBrains Mono","IBM Plex Mono",ui-monospace,Consolas,"Microsoft JhengHei",monospace';
+const PALETTE=['#ff7a59','#5ab0ff','#6fd39a','#c792ea','#f2c94c','#4dd0e1','#f48fb1','#a3c76d'];
+const AMBER='#f2a33a';
+const $=id=>document.getElementById(id);
+const fmtInt=n=>Math.round(n).toLocaleString('en-US');
+const pct=(x,d=2)=>Number.isFinite(x)?(100*x).toFixed(d)+'%':'—';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function erfc(x){const z=Math.abs(x),t=1/(1+.5*z);
+  const r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(.37409196+t*(.09678418+t*(-.18628806+t*(.27886807+t*(-1.13520398+t*(1.48851587+t*(-.82215223+t*.17087277)))))))));
+  return x>=0?r:2-r;}
+const pOfZ=z=>Number.isFinite(z)?erfc(Math.abs(z)/Math.SQRT2):NaN;
+function fmtP(p){if(!Number.isFinite(p))return '—';if(p===0)return '<1e-15';return p<1e-3?p.toExponential(1):p.toFixed(3);}
+function fmtZ(z){return Number.isFinite(z)?z.toFixed(2):'—';}
+function wilson(f,n){if(!n)return[NaN,NaN];const z=1.96,p=f/n,d=1+z*z/n,c=p+z*z/(2*n),h=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n));return[(c-h)/d,(c+h)/d];}
+function niceStep(range,n){const raw=range/n,p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p;return(m<1.5?1:m<3?2:m<7?5:10)*p;}
+function ticks(lo,hi,n=5){const s=niceStep(hi-lo||1,n),a=Math.ceil(lo/s-1e-9)*s,o=[];for(let v=a;v<=hi+1e-9;v+=s)o.push(+v.toFixed(10));return{t:o,s};}
+function lgamma(z){const g=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,.1208650973866179e-2,-.5395239384953e-5];let y=z,t=z+5.5;t-=(z+.5)*Math.log(t);let s=1.000000000190015;for(const c of g)s+=c/++y;return -t+Math.log(2.5066282746310005*s/z);}
+function gammaQ(a,x){ // regularized upper incomplete gamma
+  if(x<=0)return 1;const gln=lgamma(a);
+  if(x<a+1){let ap=a,sum=1/a,del=sum;for(let n=0;n<500;n++){ap++;del*=x/ap;sum+=del;if(Math.abs(del)<Math.abs(sum)*1e-14)break;}return Math.max(0,1-sum*Math.exp(-x+a*Math.log(x)-gln));}
+  let b=x+1-a,c=1e300,d=1/b,h=d;
+  for(let i=1;i<500;i++){const an=-i*(i-a);b+=2;d=an*d+b;if(Math.abs(d)<1e-300)d=1e-300;c=b+an/c;if(Math.abs(c)<1e-300)c=1e-300;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<1e-14)break;}
+  return Math.exp(-x+a*Math.log(x)-gln)*h;}
+const chiP=(x,df)=>df>0&&Number.isFinite(x)?gammaQ(df/2,x/2):NaN;
+function ranks(a){const idx=a.map((v,i)=>i).sort((i,j)=>a[i]-a[j]),r=new Array(a.length);for(let i=0;i<idx.length;){let j=i;while(j+1<idx.length&&a[idx[j+1]]===a[idx[i]])j++;const m=(i+j)/2+1;for(let k=i;k<=j;k++)r[idx[k]]=m;i=j+1;}return r;}
+function pearson(x,y){const n=x.length,mx=x.reduce((s,v)=>s+v,0)/n,my=y.reduce((s,v)=>s+v,0)/n;let sxy=0,sxx=0,syy=0;for(let i=0;i<n;i++){sxy+=(x[i]-mx)*(y[i]-my);sxx+=(x[i]-mx)**2;syy+=(y[i]-my)**2;}return sxx>0&&syy>0?sxy/Math.sqrt(sxx*syy):NaN;}
+function median(a){if(!a.length)return NaN;const b=[...a].sort((x,y)=>x-y),m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2;}
+
+/* ====================== zip reader (no library) ====================== */
+function decodeName(u8,flag){try{return new TextDecoder(flag&0x800?'utf-8':'utf-8',{fatal:true}).decode(u8);}catch(e){return new TextDecoder('latin1').decode(u8);}}
+function readZipEntries(buf){
+  const dv=new DataView(buf),u8=new Uint8Array(buf);let eocd=-1;
+  for(let i=buf.byteLength-22;i>=Math.max(0,buf.byteLength-65557);i--){if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;}}
+  if(eocd<0)throw new Error('不是有效的 ZIP');
+  const total=dv.getUint16(eocd+10,true);let off=dv.getUint32(eocd+16,true);const out=[];
+  for(let k=0;k<total;k++){
+    if(dv.getUint32(off,true)!==0x02014b50)break;
+    const flag=dv.getUint16(off+8,true),method=dv.getUint16(off+10,true),csize=dv.getUint32(off+20,true),
+          nl=dv.getUint16(off+28,true),el=dv.getUint16(off+30,true),cl=dv.getUint16(off+32,true),lho=dv.getUint32(off+42,true);
+    const name=decodeName(u8.subarray(off+46,off+46+nl),flag);off+=46+nl+el+cl;
+    if(name.endsWith('/'))continue;
+    if(csize===0xFFFFFFFF||lho===0xFFFFFFFF)throw new Error('不支援 ZIP64');
+    const lnl=dv.getUint16(lho+26,true),lel=dv.getUint16(lho+28,true),ds=lho+30+lnl+lel;
+    out.push({name,method,data:u8.subarray(ds,ds+csize)});
+  }
+  return out;
+}
+async function inflateRaw(data){
+  if(typeof DecompressionStream==='undefined')throw new Error('瀏覽器不支援 DecompressionStream,請使用新版 Chrome / Edge / Firefox');
+  const s=new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+/* returns [{name, bytes(Uint8Array)}] flattened (nested zips expanded) */
+async function expand(name,bytes,depth=0){
+  const low=name.toLowerCase();
+  if(low.endsWith('.zip')&&depth<4){
+    const out=[];
+    for(const e of readZipEntries(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength))){
+      if(/(^|\/)(__MACOSX|\._)/.test(e.name))continue;
+      const b=e.method===0?e.data:e.method===8?await inflateRaw(e.data):null;
+      if(!b){out.push({name:name+'!'+e.name,error:'不支援的壓縮方式 '+e.method});continue;}
+      out.push(...await expand(name+'!'+e.name,b,depth+1));
+    }
+    return out;
+  }
+  return[{name,bytes}];
+}
+
+/* ====================== log parser ====================== */
+function splitCSV(line){
+  if(line.indexOf('"')<0)return line.split(',');
+  const out=[];let cur='',q=false;
+  for(let i=0;i<line.length;i++){const c=line[i];
+    if(q){if(c==='"'){if(line[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else if(c==='"')q=true;else if(c===','){out.push(cur);cur='';}else cur+=c;}
+  out.push(cur);return out;
+}
+const num=s=>{if(s===undefined)return NaN;s=s.trim();if(s==='')return NaN;const v=parseFloat(s);return v};
+function productOf(lot){const p=(lot||'').slice(0,2).toUpperCase();return p==='RK'?'LLD':p==='RP'?'ULLD':'Other';}
+
+function parseLog(text,fname){
+  const lines=text.split(/\r?\n/);
+  const hi=lines.findIndex(l=>l.startsWith('Serial#'));
+  if(hi<0)throw new Error('找不到 Serial# 資料表頭(非 dlog csv?)');
+  const head=splitCSV(lines[hi]).map(s=>s.trim());
+  const xi=head.indexOf('XAdr'),yi=head.indexOf('YAdr'),bi=head.indexOf('Bin#');
+  if(xi<0||yi<0||bi<0)throw new Error('缺少 XAdr / YAdr / Bin# 欄位');
+  const c0=Math.max(xi,yi)+1;
+  const meta={},blocks=[];
+  for(let i=0;i<hi;i++){
+    const l=lines[i];
+    if(l.startsWith(',,,')){blocks.push(splitCSV(l));continue;}
+    const m=/^([A-Za-z][^:]*?)\s*:\s*(.*)$/.exec(l);
+    if(m&&!(m[1].trim() in meta))meta[m[1].trim()]=m[2].trim();
+  }
+  if(blocks.length<4)throw new Error('找不到測項名稱 / 規格列');
+  const [namesR,unitsR,upR,loR]=blocks.slice(-4);
+  let T=0;for(let i=c0;i<namesR.length;i++)if(namesR[i].trim()!=='')T=i-c0+1;
+  if(!T)throw new Error('沒有測項');
+  const tests=[];
+  for(let t=0;t<T;t++){
+    const name=(namesR[c0+t]||'').trim();
+    tests.push({name,short:name.replace(/\(\d+\)$/,''),unit:(unitsR[c0+t]||'').trim(),upper:num(upR[c0+t]),lower:num(loR[c0+t])});
+  }
+  // same short name appears more than once (e.g. VZ0(5), VZ0(6)) -> keep the index to tell them apart
+  const dupCnt={};for(const te of tests)dupCnt[te.short]=(dupCnt[te.short]||0)+1;
+  for(const te of tests)if(dupCnt[te.short]>1)te.short=te.name;
+  const X=[],Y=[],B=[],SI=[],rows=[],si=head.indexOf('Site#');
+  for(let i=hi+1;i<lines.length;i++){
+    const l=lines[i];if(!l||!l.trim())continue;
+    const c=splitCSV(l);const x=+c[xi],y=+c[yi];
+    if(!Number.isFinite(x)||!Number.isFinite(y)||c[xi]===''||c[yi]==='')continue;
+    X.push(x);Y.push(y);B.push(+c[bi]);SI.push(si>=0?+c[si]:0);rows.push(c);
+  }
+  const tm=/Temperature:\s*(-?[\d.]+)/i.exec(meta['Handler/Prober Name']||'');
+  const temp=tm?parseFloat(tm[1]):NaN;
+  const n=X.length;if(!n)throw new Error('沒有 die 資料');
+  const vals=new Float64Array(n*T).fill(NaN);
+  for(let i=0;i<n;i++){const c=rows[i];for(let t=0;t<T;t++){const v=num(c[c0+t]);if(v===v)vals[i*T+t]=v;}}
+  // first-fail index per die
+  const ff=new Int16Array(n).fill(32767);
+  for(let i=0;i<n;i++)for(let t=0;t<T;t++){
+    const v=vals[i*T+t];if(v!==v)continue;
+    if(v>tests[t].upper||v<tests[t].lower){ff[i]=t;break;}
+  }
+  // normalized radius: wafer centroid, R = farthest die
+  let sx=0,sy=0;for(let i=0;i<n;i++){sx+=X[i];sy+=Y[i];}
+  const cx=sx/n,cy=sy/n,r=new Float64Array(n);let R=0;
+  for(let i=0;i<n;i++){r[i]=Math.hypot(X[i]-cx,Y[i]-cy);if(r[i]>R)R=r[i];}
+  if(R>0)for(let i=0;i<n;i++)r[i]/=R;
+  const lot=meta['Lot ID']||fname.replace(/[-_].*$/,'');
+  const wafer=meta['Wafer ID']||fname;
+  const endT=Date.parse(meta['Test End Date']||'')||Date.parse(meta['Test Start Date']||'')||0;
+  return{fname,lot,wafer,meta,product:productOf(lot),tests,T,n,x:X,y:Y,bin:B,site:Int16Array.from(SI),temp,vals,ff,r,cx,cy,R,endT,
+         prodId:meta['Production ID']||'',sig:tests.map(t=>t.name).join('|')};
+}
+
+/* ====================== state ====================== */
+const S={wafers:[],log:[],groupKey:null,lot:'ALL',test:0,mode:'first',hide:true,dedup:true,flip:false,charts:[]};
+const groupKeyOf=w=>w.product+'||'+w.sig;
+function groups(){
+  const m=new Map();
+  for(const w of S.wafers){const k=groupKeyOf(w);if(!m.has(k))m.set(k,{key:k,product:w.product,prodId:w.prodId,wafers:[]});m.get(k).wafers.push(w);}
+  return[...m.values()].sort((a,b)=>a.product.localeCompare(b.product));
+}
+function selectedWafers(){
+  const g=groups().find(g=>g.key===S.groupKey);if(!g)return[];
+  let ws=g.wafers;
+  if(S.lot!=='ALL')ws=ws.filter(w=>w.lot===S.lot);
+  if(S.dedup){
+    const best=new Map();
+    for(const w of ws){const k=w.lot+'|'+w.wafer,o=best.get(k);if(!o||w.endT>=o.endT)best.set(k,w);}
+    ws=ws.filter(w=>best.get(w.lot+'|'+w.wafer)===w);
+  }
+  return ws.sort((a,b)=>(a.lot+a.wafer).localeCompare(b.lot+b.wafer,undefined,{numeric:true}));
+}
+
+/* ====================== analysis ====================== */
+function analyze(W,t,mode,wantMap){
+  const zn=new Float64Array(5),zf=new Float64Array(5),bn=new Float64Array(10),bf=new Float64Array(10);
+  let N=0,F=0,ni=0,fi=0,no=0,fo=0,nW=0,wOut=0,wIn=0,Us=0,Vs=0;
+  const binCount=new Map(),cells=wantMap?new Map():null,diffs=[],siteMap=new Map(),wp=[];
+  let gx0=1e9,gx1=-1e9,gy0=1e9,gy1=-1e9;
+  const wn=new Float64Array(10),wf=new Float64Array(10);
+  for(const w of W){
+    const T=w.T,te=w.tests[t],up=te.upper,lo=te.lower;
+    wn.fill(0);wf.fill(0);
+    let n=0,f=0,sr=0,sr2=0,srf=0,wni=0,wfi=0,wno=0,wfo=0;
+    for(let i=0;i<w.n;i++){
+      if(wantMap){const x=w.x[i],y=w.y[i];if(x<gx0)gx0=x;if(x>gx1)gx1=x;if(y<gy0)gy0=y;if(y>gy1)gy1=y;}
+      const v=w.vals[i*T+t];if(v!==v)continue;
+      let fail;
+      if(mode==='first'){if(w.ff[i]<t)continue;fail=w.ff[i]===t;}
+      else fail=(v>up)||(v<lo);
+      const r=w.r[i],zi=Math.min(Math.floor(r/0.2),4),bi=Math.min(Math.floor(r/0.1),9),b=fail?1:0;
+      n++;f+=b;sr+=r;sr2+=r*r;srf+=r*b;
+      zn[zi]++;zf[zi]+=b;wn[bi]++;wf[bi]+=b;bn[bi]++;bf[bi]+=b;
+      if(r<0.5){wni++;wfi+=b;}
+      if(r>=0.8){wno++;wfo+=b;}
+      if(fail)binCount.set(w.bin[i],(binCount.get(w.bin[i])||0)+1);
+      if(wantMap){const k=(w.x[i]+500)*1000+(w.y[i]+500);let c=cells.get(k);if(!c){c={x:w.x[i],y:w.y[i],n:0,f:0};cells.set(k,c);}c.n++;c.f+=b;
+        let s=siteMap.get(w.site[i]);if(!s){s={n:0,f:0,no:0,zn:new Float64Array(5),zf:new Float64Array(5)};siteMap.set(w.site[i],s);}
+        s.n++;s.f+=b;s.zn[zi]++;if(r>=0.8)s.no++;}
+    }
+    if(!n)continue;
+    if(wantMap)wp.push({label:w.wafer,temp:w.temp,n,f,ni:wni,fi:wfi,no:wno,fo:wfo});
+    nW++;N+=n;F+=f;ni+=wni;fi+=wfi;no+=wno;fo+=wfo;
+    if(wni&&wno)diffs.push(100*(wfo/wno-wfi/wni));
+    if(f>0&&f<n&&n>1){
+      let sb=0;for(let i=0;i<10;i++)sb+=wn[i]*i;sb/=n;
+      let U=-f*sb,Sxx=0;for(let i=0;i<10;i++){U+=i*wf[i];Sxx+=wn[i]*(i-sb)*(i-sb);}
+      const V=f*(n-f)/(n*(n-1))*Sxx;if(V>0){Us+=U;Vs+=V;}
+      const rb=sr/n,Ur=srf-rb*f,Sr=sr2-n*rb*rb,Vr=f*(n-f)/(n*(n-1))*Sr;
+      if(Vr>0){const z=Ur/Math.sqrt(Vr);if(z>=1.96)wOut++;else if(z<=-1.96)wIn++;}
+    }
+  }
+  // pooled Cochran-Armitage over 5 zones
+  let zPool=NaN;
+  if(F>0&&F<N){
+    let sb=0;for(let i=0;i<5;i++)sb+=zn[i]*i;sb/=N;
+    let U=-F*sb,Sxx=0;for(let i=0;i<5;i++){U+=i*zf[i];Sxx+=zn[i]*(i-sb)*(i-sb);}
+    const p=F/N,V=p*(1-p)*Sxx;if(V>0)zPool=U/Math.sqrt(V);
+  }
+  const zStrat=Vs>0?Us/Math.sqrt(Vs):NaN,pPool=pOfZ(zPool),pStrat=pOfZ(zStrat);
+  const mk=(f,n)=>{const[lo,hi]=wilson(f,n);return{n,f,rate:n?f/n:NaN,lo,hi};};
+  const zones=[...zn].map((n,i)=>mk(zf[i],n)),fine=[...bn].map((n,i)=>mk(bf[i],n));
+  const inner=mk(fi,ni),outer=mk(fo,no);
+  const bins=[...binCount.entries()].sort((a,b)=>b[1]-a[1]);
+  // verdict
+  const sP=pPool<0.05,sS=pStrat<0.05;
+  let dir='none',lvl='none';
+  const d1=Math.sign(zStrat),d2=Math.sign(zPool);
+  if(sP&&sS&&d1===d2){lvl='sig';dir=d1>0?'out':'in';}
+  else if(sS){lvl='part';dir=d1>0?'out':'in';}
+  else if(sP){lvl='part';dir=d2>0?'out':'in';}
+  const A={N,F,rate:N?F/N:NaN,nW,zones,fine,inner,outer,ratio:inner.rate>0?outer.rate/inner.rate:NaN,
+    zPool,pPool,zStrat,pStrat,wOut,wIn,diffs,bins,dir,lvl,cells,t};
+  if(wantMap){
+    // ---- check 1: fail rate by Site#, raw and after removing the radial (zone) effect
+    const p0=N?F/N:0;let xr=0,xa=0;
+    A.sites=[...siteMap.entries()].sort((a,b)=>a[0]-b[0]).map(([id,s])=>{
+      let E=0,V=0;for(let z=0;z<5;z++){const p=zn[z]?zf[z]/zn[z]:0;E+=s.zn[z]*p;V+=s.zn[z]*p*(1-p);}
+      const[lo,hi]=wilson(s.f,s.n),zi=V>0?(s.f-E)/Math.sqrt(V):0,vr=s.n*p0*(1-p0);
+      if(vr>0)xr+=(s.f-s.n*p0)**2/vr;xa+=zi*zi;
+      return{id,n:s.n,f:s.f,rate:s.n?s.f/s.n:NaN,lo,hi,E:s.n?E/s.n:NaN,z:zi,outShare:s.n?s.no/s.n:NaN};});
+    const df=A.sites.length-1,okC=F>0&&F<N&&df>0;
+    A.chiRaw={x:xr,df,p:okC?chiP(xr,df):NaN};A.chiAdj={x:xa,df,p:okC?chiP(xa,df):NaN};
+    // ---- check 2: wafer fail rate vs test temperature
+    A.wp=wp;const tp=wp.filter(q=>Number.isFinite(q.temp));
+    const tt=tp.map(q=>q.temp),rr=tp.map(q=>q.f/q.n);
+    const rho=tp.length>=4?pearson(ranks(tt),ranks(rr)):NaN;
+    A.temp={n:tp.length,min:tt.length?Math.min(...tt):NaN,max:tt.length?Math.max(...tt):NaN,rho,p:Number.isFinite(rho)?pOfZ(rho*Math.sqrt(tp.length-1)):NaN};
+    const lo=Math.min(gx0,gy0),hi=Math.max(gx1,gy1);
+    A.gx0=gx0;A.gx1=gx1;A.gy0=gy0;A.gy1=gy1;A.cc=(lo+hi)/2;A.Rn=(hi-lo)/2;
+    const minN=Math.max(1,Math.round(0.2*nW));let mx=0;
+    for(const c of cells.values())if(c.n>=minN&&c.f/c.n>mx)mx=c.f/c.n;
+    if(!mx)for(const c of cells.values())if(c.f/c.n>mx)mx=c.f/c.n;
+    A.mapMax=Math.max(0.01,Math.ceil(mx*100)/100);
+  }
+  return A;
+}
+function binLabel(A){
+  if(!A.bins.length)return '';
+  const t=A.bins.slice(0,3).map(b=>'#'+b[0]).join('/');return 'Bin'+t+(A.bins.length>3?'…':'');
+}
+
+/* ====================== charts (canvas) ====================== */
+const CMAP=[[0,'#ffffcc'],[.15,'#ffeda0'],[.3,'#fed976'],[.45,'#feb24c'],[.6,'#fd8d3c'],[.75,'#e31a1c'],[1,'#800026']];
+function cmap(t){t=Math.max(0,Math.min(1,t));for(let i=1;i<CMAP.length;i++)if(t<=CMAP[i][0]){
+  const[a,ca]=CMAP[i-1],[b,cb]=CMAP[i],u=(t-a)/(b-a),p=s=>[1,3,5].map(k=>parseInt(s.slice(k,k+2),16));
+  const A=p(ca),B=p(cb);return`rgb(${A.map((v,j)=>Math.round(v+(B[j]-v)*u)).join(',')})`;}return CMAP[CMAP.length-1][1];}
+function head(ctx,title,sub){
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  ctx.fillStyle='#f1f5f8';ctx.font=`700 14px ${SANS}`;ctx.fillText(title,24,24);
+  ctx.fillStyle=AMBER;ctx.font=`12px ${MONO}`;ctx.fillText(sub,24,42);
+}
+function axisText(ctx,s,x,y,rot){ctx.save();ctx.translate(x,y);if(rot)ctx.rotate(-Math.PI/2);ctx.fillStyle='#8896a1';ctx.font=`11px ${MONO}`;ctx.textAlign='center';ctx.fillText(s,0,0);ctx.restore();}
+
+const charts={
+ map:{name:'wafer_map',h:400,
+  title:(c)=>`${c.A.name} wafer map (fail rate)`,
+  sub:(c)=>`${c.A.nW} wafers · center (${c.A.cc}, ${c.A.cc}) R=${c.A.Rn}`,
+  draw(ctx,w,h,c){
+    const A=c.A;head(ctx,this.title(c),this.sub(c));
+    const px0=44,py0=58,pw=w-px0-84,ph=h-py0-36;
+    const cell=Math.min(pw,ph)/(2*(A.Rn+.5)+.6),mx=px0+pw/2,my=py0+ph/2,s=S.flip?-1:1;
+    const G={mx,my,cell,s,cc:A.cc};this.G=G;
+    for(const cl of A.cells.values()){
+      const X=mx+(cl.x-A.cc)*cell,Y=my+s*(cl.y-A.cc)*cell;
+      ctx.fillStyle=cmap((cl.f/cl.n)/A.mapMax);ctx.fillRect(X-cell/2,Y-cell/2,cell,cell);
+      if(cell>6){ctx.strokeStyle='rgba(30,22,16,.35)';ctx.lineWidth=.6;ctx.strokeRect(X-cell/2,Y-cell/2,cell,cell);}
+    }
+    ctx.save();ctx.setLineDash([4,4]);ctx.strokeStyle='rgba(255,255,255,.38)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(mx,my,(A.Rn+.5)*cell,0,Math.PI*2);ctx.stroke();ctx.restore();
+    const bx=w-50,bw=14,by=py0+14,bh=ph-40;
+    const g=ctx.createLinearGradient(0,by,0,by+bh);for(let i=0;i<=10;i++)g.addColorStop(i/10,cmap(1-i/10));
+    ctx.fillStyle=g;ctx.fillRect(bx,by,bw,bh);
+    ctx.fillStyle='#8896a1';ctx.font=`11px ${MONO}`;ctx.textAlign='left';
+    ctx.fillText(Math.round(A.mapMax*100)+'%',bx+bw+5,by+9);ctx.fillText('0%',bx+bw+5,by+bh);
+    axisText(ctx,'YAdr',14,my,true);axisText(ctx,'XAdr',mx,h-8,false);
+  },
+  hit(px,py,c){const G=this.G;if(!G)return null;
+    const x=Math.round(G.cc+(px-G.mx)/G.cell),y=Math.round(G.cc+(py-G.my)/(G.cell*G.s));
+    const cl=c.A.cells.get((x+500)*1000+(y+500));if(!cl)return null;
+    return`X=${x}  Y=${y}\ntested ${cl.n} · fail ${cl.f}\nrate ${pct(cl.f/cl.n,1)}`;}
+ },
+ profile:{name:'radial_profile',h:400,
+  title:(c)=>`${c.A.name} radial profile (95% CI)`,
+  sub:(c)=>`N=${c.A.N} fail=${c.A.F} · ${c.A.nW} wafers`,
+  draw(ctx,w,h,c){
+    const A=c.A;head(ctx,this.title(c),this.sub(c));
+    const pad={l:52,r:22,t:62,b:50},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
+    const pts=A.fine.map((b,i)=>({...b,i})).filter(b=>b.n>0);
+    let lo=A.rate,hi=A.rate;for(const p of pts){lo=Math.min(lo,p.lo);hi=Math.max(hi,p.hi);}
+    lo*=100;hi*=100;const padv=(hi-lo)*.06+.2;lo=Math.max(0,lo-padv);hi+=padv;
+    const tk=ticks(lo,hi,6),X=v=>pad.l+v*pw,Y=v=>pad.t+ph-(v-lo)/(hi-lo)*ph;
+    this.G={X,Y,pad,pw,ph,pts};
+    ctx.lineWidth=1;ctx.strokeStyle='rgba(255,255,255,.07)';ctx.fillStyle='#8896a1';ctx.font=`10.5px ${MONO}`;
+    ctx.textAlign='right';
+    for(const v of tk.t){const y=Y(v);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+pw,y);ctx.stroke();ctx.fillText(+v.toFixed(2)+'',pad.l-7,y+3.5);}
+    ctx.textAlign='center';
+    for(let v=0;v<=1.0001;v+=.2){const x=X(v);ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+ph);ctx.stroke();ctx.fillText(v.toFixed(1),x,pad.t+ph+16);}
+    ctx.strokeStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+ph);ctx.lineTo(pad.l+pw,pad.t+ph);ctx.stroke();
+    // overall
+    ctx.save();ctx.setLineDash([4,4]);ctx.strokeStyle='rgba(255,255,255,.4)';ctx.beginPath();ctx.moveTo(pad.l,Y(A.rate*100));ctx.lineTo(pad.l+pw,Y(A.rate*100));ctx.stroke();ctx.restore();
+    ctx.strokeStyle=c.color;ctx.fillStyle=c.color;ctx.lineWidth=1.4;
+    for(const p of pts){const x=X(p.i/10+.05);ctx.beginPath();ctx.moveTo(x,Y(p.lo*100));ctx.lineTo(x,Y(p.hi*100));ctx.moveTo(x-3.5,Y(p.lo*100));ctx.lineTo(x+3.5,Y(p.lo*100));ctx.moveTo(x-3.5,Y(p.hi*100));ctx.lineTo(x+3.5,Y(p.hi*100));ctx.stroke();}
+    ctx.lineWidth=2;ctx.beginPath();pts.forEach((p,k)=>{const x=X(p.i/10+.05),y=Y(p.rate*100);k?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+    for(const p of pts){ctx.beginPath();ctx.arc(X(p.i/10+.05),Y(p.rate*100),3.6,0,7);ctx.fill();}
+    axisText(ctx,'normalized radius r/R (0=center, 1=edge)',pad.l+pw/2,h-8,false);axisText(ctx,'fail rate %',13,pad.t+ph/2,true);
+  },
+  hit(px,py,c){const G=this.G;if(!G)return null;
+    const v=(px-G.pad.l)/G.pw;if(v<0||v>1)return null;const i=Math.min(9,Math.floor(v*10)),b=c.A.fine[i];if(!b.n)return null;
+    return`r/R ${(i/10).toFixed(1)}–${((i+1)/10).toFixed(1)}\ntested ${fmtInt(b.n)} · fail ${fmtInt(b.f)}\nrate ${pct(b.rate)}  CI ${(b.lo*100).toFixed(1)}–${(b.hi*100).toFixed(1)}`;}
+ },
+ hist:{name:'per_wafer_outer_inner',h:400,
+  title:(c)=>`${c.A.name} per-wafer outer − inner`,
+  sub:(c)=>`median ${Number.isFinite(median(c.A.diffs))?median(c.A.diffs).toFixed(2):'—'}pp · ${c.A.diffs.length} wafers`,
+  draw(ctx,w,h,c){
+    const A=c.A,d=A.diffs;head(ctx,this.title(c),this.sub(c));
+    const pad={l:52,r:22,t:62,b:50},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
+    if(!d.length){ctx.fillStyle='#8896a1';ctx.font=`12px ${MONO}`;ctx.textAlign='center';ctx.fillText('no wafer has both inner and outer dies tested',w/2,h/2);this.G=null;return;}
+    const med=median(d);let mn=Math.min(...d,0,med),mxv=Math.max(...d,0,med);
+    const step=niceStep((mxv-mn)||1,10),e0=Math.floor(mn/step)*step,nb=Math.max(1,Math.ceil((mxv-e0)/step+1e-9));
+    const cnt=new Array(nb).fill(0);for(const v of d)cnt[Math.min(nb-1,Math.floor((v-e0)/step))]++;
+    const e1=e0+nb*step,cmax=Math.max(...cnt),yt=ticks(0,cmax,5),ymax=Math.max(cmax,yt.t[yt.t.length-1]);
+    const X=v=>pad.l+(v-e0)/(e1-e0)*pw,Y=v=>pad.t+ph-v/ymax*ph;
+    this.G={X,Y,pad,pw,ph,e0,step,cnt,nb};
+    ctx.lineWidth=1;ctx.strokeStyle='rgba(255,255,255,.07)';ctx.fillStyle='#8896a1';ctx.font=`10.5px ${MONO}`;ctx.textAlign='right';
+    for(const v of yt.t){const y=Y(v);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+pw,y);ctx.stroke();ctx.fillText(v+'',pad.l-7,y+3.5);}
+    const xt=ticks(e0,e1,6);ctx.textAlign='center';
+    for(const v of xt.t){const x=X(v);ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+ph);ctx.stroke();ctx.fillText(+v.toFixed(2)+'',x,pad.t+ph+16);}
+    ctx.fillStyle=c.color+'cc';ctx.strokeStyle=c.color;
+    cnt.forEach((k,i)=>{if(!k)return;const x0=X(e0+i*step),x1=X(e0+(i+1)*step);ctx.fillRect(x0+.5,Y(k),x1-x0-1,Y(0)-Y(k));ctx.strokeRect(x0+.5,Y(k),x1-x0-1,Y(0)-Y(k));});
+    ctx.strokeStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+ph);ctx.lineTo(pad.l+pw,pad.t+ph);ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(X(0),pad.t);ctx.lineTo(X(0),pad.t+ph);ctx.stroke();
+    ctx.strokeStyle=AMBER;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(med),pad.t);ctx.lineTo(X(med),pad.t+ph);ctx.stroke();
+    const lab=`median ${med.toFixed(2)}pp`;ctx.font=`11px ${MONO}`;ctx.fillStyle=AMBER;
+    if(X(med)+ctx.measureText(lab).width+8>w-pad.r){ctx.textAlign='right';ctx.fillText(lab,X(med)-5,pad.t+13);}else{ctx.textAlign='left';ctx.fillText(lab,X(med)+5,pad.t+13);}
+    axisText(ctx,'outer(r/R≥0.8) − inner(<0.5) fail rate (pp)',pad.l+pw/2,h-8,false);axisText(ctx,'# wafers',13,pad.t+ph/2,true);
+  },
+  hit(px,py,c){const G=this.G;if(!G)return null;const v=G.e0+(px-G.pad.l)/G.pw*(G.nb*G.step),i=Math.floor((v-G.e0)/G.step);
+    if(i<0||i>=G.nb)return null;return`[${(+(G.e0+i*G.step).toFixed(2))}, ${(+(G.e0+(i+1)*G.step).toFixed(2))}) pp\n${G.cnt[i]} wafer(s)`;}
+ }
+};
+
+/* ---- test-side checks: Site# and temperature ---- */
+const PAD2={l:52,r:22,t:62,b:50};
+function frame(ctx,w,h,xlab,ylab){axisText(ctx,xlab,PAD2.l+(w-PAD2.l-PAD2.r)/2,h-8,false);axisText(ctx,ylab,13,PAD2.t+(h-PAD2.t-PAD2.b)/2,true);}
+charts.site={name:'site_fail_rate',h:400,
+  title:(c)=>`${c.A.name} fail rate by Site#`,
+  sub:(c)=>`χ² p=${fmtP(c.A.chiRaw.p)} · 扣除半徑後 p=${fmtP(c.A.chiAdj.p)}`,
+  draw(ctx,w,h,c){
+    const A=c.A,pad=PAD2,pw=w-pad.l-pad.r,ph=h-pad.t-pad.b,S=A.sites;head(ctx,this.title(c),this.sub(c));
+    ctx.textAlign='right';ctx.fillStyle='#8896a1';ctx.font=`10.5px ${MONO}`;ctx.fillText('▬ 依半徑期望值',w-pad.r,42);
+    if(!S.length){this.G=null;return;}
+    let hi=A.rate;for(const s of S)hi=Math.max(hi,s.hi||0,s.E||0);hi=hi*100*1.08;
+    const tk=ticks(0,hi,5),Y=v=>pad.t+ph-v/hi*ph,bw=pw/S.length;this.G={pad,pw,bw,S};
+    ctx.lineWidth=1;ctx.strokeStyle='rgba(255,255,255,.07)';ctx.fillStyle='#8896a1';ctx.textAlign='right';
+    for(const v of tk.t){const y=Y(v);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+pw,y);ctx.stroke();ctx.fillText(+v.toFixed(2)+'',pad.l-7,y+3.5);}
+    S.forEach((s,i)=>{
+      const x0=pad.l+i*bw+bw*.18,x1=pad.l+(i+1)*bw-bw*.18,xm=(x0+x1)/2,flag=Math.abs(s.z)>=3;
+      ctx.fillStyle=c.color+'bb';ctx.fillRect(x0,Y(s.rate*100),x1-x0,Y(0)-Y(s.rate*100));
+      ctx.strokeStyle=flag?AMBER:c.color;ctx.lineWidth=flag?2.2:1;ctx.strokeRect(x0,Y(s.rate*100),x1-x0,Y(0)-Y(s.rate*100));
+      ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(xm,Y(s.lo*100));ctx.lineTo(xm,Y(s.hi*100));
+      ctx.moveTo(xm-4,Y(s.lo*100));ctx.lineTo(xm+4,Y(s.lo*100));ctx.moveTo(xm-4,Y(s.hi*100));ctx.lineTo(xm+4,Y(s.hi*100));ctx.stroke();
+      ctx.strokeStyle='#fff';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(x0-3,Y(s.E*100));ctx.lineTo(x1+3,Y(s.E*100));ctx.stroke();
+      ctx.fillStyle=flag?AMBER:'#8896a1';ctx.textAlign='center';ctx.font=`${flag?700:400} 11px ${MONO}`;ctx.fillText((flag?'⚠ ':'')+s.id,xm,pad.t+ph+16);
+    });
+    ctx.save();ctx.setLineDash([4,4]);ctx.strokeStyle='rgba(255,255,255,.4)';ctx.beginPath();ctx.moveTo(pad.l,Y(A.rate*100));ctx.lineTo(pad.l+pw,Y(A.rate*100));ctx.stroke();ctx.restore();
+    ctx.strokeStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+ph);ctx.lineTo(pad.l+pw,pad.t+ph);ctx.stroke();
+    frame(ctx,w,h,'Site#','fail rate %');
+  },
+  hit(px,py,c){const G=this.G;if(!G)return null;const i=Math.floor((px-G.pad.l)/G.bw);if(i<0||i>=G.S.length)return null;const s=G.S[i];
+    return`Site# ${s.id}\ntested ${fmtInt(s.n)} · fail ${fmtInt(s.f)}\nrate ${pct(s.rate)}  CI ${(s.lo*100).toFixed(1)}–${(s.hi*100).toFixed(1)}\n依半徑期望 ${pct(s.E)}  (z=${s.z.toFixed(2)})\n邊緣(r≥0.8)die 占比 ${pct(s.outShare,1)}`;}
+};
+charts.temp={name:'temp_vs_fail',h:400,
+  title:(c)=>`${c.A.name} fail rate vs 測試溫度`,
+  sub:(c)=>{const t=c.A.temp;return t.n?`Spearman ρ=${fmtZ(t.rho)} (p≈${fmtP(t.p)}) · ${t.min.toFixed(1)}–${t.max.toFixed(1)}°C`:'log 內無溫度資訊';},
+  draw(ctx,w,h,c){
+    const A=c.A,pad=PAD2,pw=w-pad.l-pad.r,ph=h-pad.t-pad.b,P=A.wp.filter(q=>Number.isFinite(q.temp));head(ctx,this.title(c),this.sub(c));
+    if(!P.length){ctx.fillStyle='#8896a1';ctx.font=`12px ${MONO}`;ctx.textAlign='center';ctx.fillText('Handler/Prober Name 欄位找不到 Temperature',w/2,h/2);this.G=null;return;}
+    let x0=A.temp.min,x1=A.temp.max;if(x1-x0<0.5){x0-=1;x1+=1;}else{const m=(x1-x0)*.08;x0-=m;x1+=m;}
+    let ymax=Math.max(...P.map(q=>q.f/q.n))*100*1.12||1;const tx=ticks(x0,x1,6),ty=ticks(0,ymax,5);
+    const X=v=>pad.l+(v-x0)/(x1-x0)*pw,Y=v=>pad.t+ph-v/ymax*ph;this.G={X,Y,P};
+    ctx.lineWidth=1;ctx.strokeStyle='rgba(255,255,255,.07)';ctx.fillStyle='#8896a1';ctx.font=`10.5px ${MONO}`;ctx.textAlign='right';
+    for(const v of ty.t){const y=Y(v);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+pw,y);ctx.stroke();ctx.fillText(+v.toFixed(2)+'',pad.l-7,y+3.5);}
+    ctx.textAlign='center';for(const v of tx.t){const x=X(v);ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+ph);ctx.stroke();ctx.fillText(+v.toFixed(1)+'',x,pad.t+ph+16);}
+    ctx.strokeStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+ph);ctx.lineTo(pad.l+pw,pad.t+ph);ctx.stroke();
+    // least-squares trend (only if temperatures actually vary)
+    const tt=P.map(q=>q.temp),rr=P.map(q=>100*q.f/q.n);
+    if(P.length>=3&&Math.max(...tt)-Math.min(...tt)>=0.5){const mx=tt.reduce((a,b)=>a+b)/tt.length,my=rr.reduce((a,b)=>a+b)/rr.length;let sxy=0,sxx=0;tt.forEach((v,i)=>{sxy+=(v-mx)*(rr[i]-my);sxx+=(v-mx)**2;});
+      const b=sxy/sxx,a=my-b*mx;ctx.save();ctx.setLineDash([5,4]);ctx.strokeStyle=AMBER;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(X(Math.min(...tt)),Y(a+b*Math.min(...tt)));ctx.lineTo(X(Math.max(...tt)),Y(a+b*Math.max(...tt)));ctx.stroke();ctx.restore();}
+    ctx.fillStyle=c.color+'cc';ctx.strokeStyle=c.color;ctx.lineWidth=1.3;
+    for(const q of P){ctx.beginPath();ctx.arc(X(q.temp),Y(100*q.f/q.n),4.6,0,7);ctx.fill();ctx.stroke();}
+    frame(ctx,w,h,'wafer 測試溫度 (°C)','wafer fail rate %');
+  },
+  hit(px,py,c){const G=this.G;if(!G)return null;let best=null,bd=14;for(const q of G.P){const d=Math.hypot(G.X(q.temp)-px,G.Y(100*q.f/q.n)-py);if(d<bd){bd=d;best=q;}}
+    if(!best)return null;const q=best;return`${q.label}\n${q.temp.toFixed(1)} °C\ntested ${fmtInt(q.n)} · fail ${fmtInt(q.f)} (${pct(q.f/q.n)})\ninner ${pct(q.ni?q.fi/q.ni:NaN)} · outer ${pct(q.no?q.fo/q.no:NaN)}`;}
+};
+function noteSite(A){
+  if(!Number.isFinite(A.chiRaw.p))return'Site# 資料不足,無法檢定。';
+  const bad=A.sites.filter(s=>Math.abs(s.z)>=3).map(s=>s.id);
+  if(A.chiAdj.p<0.05)return`扣除半徑效應後,Site 間 fail 率仍有顯著差異(p=${fmtP(A.chiAdj.p)})${bad.length?`,偏離最大:Site# ${bad.join('、')}(⚠ 標示,|z|≥3)`:''}。優先檢查這些 site 的探針針尖、接觸電阻與量測通道。`;
+  if(A.chiRaw.p<0.05)return`Site 間原始差異顯著(p=${fmtP(A.chiRaw.p)}),但扣除半徑後不顯著(p=${fmtP(A.chiAdj.p)}):差異主要來自各 site 負責的 die 位置(邊緣占比不同),較不像探針問題。`;
+  return`各 Site# 之間無顯著差異(p=${fmtP(A.chiRaw.p)}),較不像單一 site/探針造成。`;
+}
+function noteTemp(A){
+  const t=A.temp;if(!t.n)return'log 內沒有溫度資訊。';
+  const d=t.max-t.min;
+  if(d<1)return`所有 wafer 測試溫度幾乎相同(Δ${d.toFixed(1)}°C),溫度不太可能解釋 wafer 間的差異。`;
+  if(!Number.isFinite(t.p))return`溫度範圍 ${t.min.toFixed(1)}–${t.max.toFixed(1)}°C,wafer 數不足以檢定。`;
+  if(t.p<0.05)return`wafer fail 率與測試溫度顯著${t.rho>0?'正':'負'}相關(ρ=${fmtZ(t.rho)},p≈${fmtP(t.p)};溫度範圍 Δ${d.toFixed(1)}°C)。${t.rho>0?'溫度愈高 fail 愈多,漏電類測項尤其要檢查 chuck 溫度控制與各片實測溫度。':'溫度愈低 fail 愈多,請確認 chuck 溫度設定與穩定時間。'}`;
+  return`wafer fail 率與測試溫度無顯著相關(ρ=${fmtZ(t.rho)},p≈${fmtP(t.p)};Δ${d.toFixed(1)}°C)。p 值為常態近似,wafer 數少時僅供參考。`;
+}
+
+/* ====================== render ====================== */
+function setupCanvas(cv,key,ctxObj){
+  const ch=charts[key];
+  const draw=()=>{
+    const w=cv.parentElement.clientWidth-32,h=ch.h,dpr=window.devicePixelRatio||1;
+    if(w<50)return;cv.style.height=h+'px';cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+    const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);ch.draw(g,w,h,ctxObj);
+  };
+  draw();
+  const tip=$('r_tip');
+  cv.onmousemove=e=>{const r=cv.getBoundingClientRect(),t=ch.hit(e.clientX-r.left,e.clientY-r.top,ctxObj);
+    if(!t){tip.style.display='none';return;}tip.textContent=t;tip.style.display='block';
+    tip.style.left=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8)+'px';tip.style.top=(e.clientY+14)+'px';};
+  cv.onmouseleave=()=>{tip.style.display='none';};
+  return draw;
+}
+function exportPNG(key,ctxObj){
+  const ch=charts[key],w=720,h=480,sc=2,cv=document.createElement('canvas');cv.width=w*sc;cv.height=h*sc;
+  const g=cv.getContext('2d');g.scale(sc,sc);g.fillStyle='#0f1417';g.fillRect(0,0,w,h);
+  const keep=ch.G;ch.draw(g,w,h,ctxObj);ch.G=keep;
+  cv.toBlob(async b=>{const name=`${ctxObj.A.name}_${ch.name}.png`,dl=(typeof claude!=='undefined'&&claude.use)?await claude.use('downloads'):null;
+    if(dl){try{await dl.save({filename:name,data:await b.arrayBuffer()});}catch(e){if(!e||e.code!=='declined')alert('匯出失敗:'+((e&&e.message)||e));}return;}
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);});
+}
+
+function verdictText(A){
+  if(A.dir==='none')return{cls:'none',txt:'無顯著徑向趨勢'};
+  const side=A.dir==='out'?'外':'內';
+  return A.lvl==='sig'?{cls:A.dir,txt:`越${side}圈 fail 越多(顯著)`}
+                      :{cls:A.dir,txt:`傾向越${side}圈 fail 越多(僅部分檢定顯著)`};
+}
+function render(){
+  const ws=selectedWafers(),main=$('r_main');
+  S.charts.forEach(c=>c.ro&&c.ro.disconnect());S.charts=[];
+  const g=groups().find(g=>g.key===S.groupKey);
+  if(!g||!ws.length){main.innerHTML='<div class="empty">沒有符合條件的 wafer</div>';return;}
+  const T=ws[0].tests;
+  const sums=T.map((te,t)=>{const A=analyze(ws,t,S.mode,false);return{t,A};});
+  // test dropdown
+  const sel=$('r_selTest');
+  let list=sums.filter(s=>!S.hide||s.A.F>0);
+  if(!list.some(s=>s.t===S.test)){
+    const best=[...sums].sort((a,b)=>b.A.F-a.A.F)[0];
+    S.test=list.some(s=>s.t===best.t)?best.t:(list[0]?list[0].t:0);
+    if(!list.length)list=sums;
+  }
+  sel.innerHTML=list.map(s=>`<option value="${s.t}"${s.t===S.test?' selected':''}>${esc(T[s.t].short)}${T[s.t].unit?' ['+esc(T[s.t].unit)+']':''} — fail ${fmtInt(s.A.F)} / ${fmtInt(s.A.N)} (${pct(s.A.rate)})${s.A.bins.length?' · '+binLabel(s.A):''}</option>`).join('');
+  const t=S.test,A=analyze(ws,t,S.mode,true);A.name=T[t].short;
+  // colour = rank of the test by fail count within this selection (most fails -> coral, next -> blue ...)
+  const rank=[...sums].sort((a,b)=>b.A.F-a.A.F||a.t-b.t).findIndex(s=>s.t===t);
+  const color=PALETTE[rank%PALETTE.length];
+  const vt=verdictText(A);
+  if(!A.N||!A.F){
+    main.innerHTML=`<div class="card empty">${esc(A.name)}:${A.N?'此測項在所選資料中沒有 fail,無法做同心圓分析':'沒有受測資料'}</div>`+overviewHTML(sums,T,t);
+    bindOverview();return;
+  }
+  const zrows=A.zones.map((z,i)=>{const mxr=Math.max(...A.zones.map(q=>q.rate||0))||1;
+    return`<tr><td>${(i*.2).toFixed(1)}–${((i+1)*.2).toFixed(1)}</td><td>${fmtInt(z.n)}</td><td>${fmtInt(z.f)}</td><td>${pct(z.rate)}</td><td class="ci">${(z.lo*100).toFixed(1)}–${(z.hi*100).toFixed(1)}</td><td class="bar"><div class="track"><i style="width:${(z.rate/mxr*100).toFixed(1)}%;background:${color}"></i></div></td></tr>`;}).join('');
+  const cx={A,color};
+  const cardTitle={map:`${esc(A.name)} wafer map (fail rate)`,profile:`${esc(A.name)} radial profile`,hist:`${esc(A.name)} per-wafer outer-inner`,
+    site:`${esc(A.name)} 按 Site# 的 fail 率`,temp:`${esc(A.name)} 依 wafer 的測試溫度`};
+  const cardSub={map:`stacked · ${A.nW} wafers`,profile:'95% Wilson CI',hist:'wafer-level consistency',site:esc(charts.site.sub(cx)),temp:esc(charts.temp.sub(cx))};
+  const cardNote={site:noteSite(A),temp:noteTemp(A)};
+  const cardHTML=k=>`<div class="card chart"><div class="ch"><div><h3>${cardTitle[k]}</h3><div class="sub">${cardSub[k]}</div></div><button class="png" data-k="${k}">⤓ PNG</button></div><canvas data-k="${k}"></canvas>${cardNote[k]?`<p class="note">${esc(cardNote[k])}</p>`:''}</div>`;
+  main.innerHTML=`
+  <div class="ahead"><span class="tag" style="background:${color}">WAFER</span><h2>${esc(A.name)} fail · 同心圓分析</h2>
+    <span class="meta">${A.nW} wafers · tested N=${fmtInt(A.N)} · fail=${fmtInt(A.F)} (${pct(A.rate)})${A.bins.length?' · fail '+esc(binLabel(A)):''}</span></div>
+  <div class="card top-card">
+    <div>
+      <div class="verdict ${vt.cls}">${vt.txt}</div>
+      <div class="stats">
+        <div class="stat"><div class="k">Inner (R/R&lt;0.5)</div><div class="v">${pct(A.inner.rate)}</div></div>
+        <div class="stat"><div class="k">Outer (R/R≥0.8)</div><div class="v">${pct(A.outer.rate)}</div></div>
+        <div class="stat"><div class="k">Outer / Inner</div><div class="v">${Number.isFinite(A.ratio)?A.ratio.toFixed(2)+'×':'—'}</div></div>
+        <div class="stat"><div class="k">Pooled trend Z (P)</div><div class="v">${fmtZ(A.zPool)} <small>(${fmtP(A.pPool)})</small></div></div>
+        <div class="stat"><div class="k">Wafer-stratified Z (P)</div><div class="v">${fmtZ(A.zStrat)} <small>(${fmtP(A.pStrat)})</small></div></div>
+        <div class="stat"><div class="k">Wafers 外圈多 / 內圈多</div><div class="v">${A.wOut} / ${A.wIn} <small>of ${A.nW}</small></div></div>
+      </div>
+      <p class="note">z&gt;0 代表越外圈越多;|z|&gt;1.96 約為 p&lt;0.05。wafer-stratified 先在各 wafer 內檢定再合併,可排除 wafer／lot 基準 fail 率差異的影響。「Wafers 外圈多 / 內圈多」為單片 wafer 內徑向趨勢檢定 |z|≥1.96 的片數。</p>
+    </div>
+    <div><table class="zt"><thead><tr><th>R/R zone</th><th>N</th><th>Fail</th><th>Rate</th><th>95% CI</th><th></th></tr></thead><tbody>${zrows}</tbody></table></div>
+  </div>
+  <div class="charts">${['map','profile','hist'].map(cardHTML).join('')}</div>
+  <div class="sect">測試端檢查 · 排除探針 / 溫度造成的假象</div>
+  <div class="charts two">${['site','temp'].map(cardHTML).join('')}</div>
+  ${overviewHTML(sums,T,t)}`;
+  main.querySelectorAll('canvas').forEach(cv=>{
+    const k=cv.dataset.k,draw=setupCanvas(cv,k,cx),ro=new ResizeObserver(()=>draw());ro.observe(cv.parentElement);S.charts.push({ro});
+  });
+  main.querySelectorAll('.png').forEach(b=>b.onclick=()=>exportPNG(b.dataset.k,cx));
+  bindOverview();
+}
+function overviewHTML(sums,T,cur){
+  const rows=sums.filter(s=>s.A.F>0).map(({t,A})=>{
+    const v=A.lvl==='none'?{c:'none',x:'—'}:{c:A.dir,x:(A.dir==='out'?'外圈↑':'內圈↑')+(A.lvl==='part'?'(部分)':'')};
+    return`<tr data-t="${t}" class="${t===cur?'sel':''}"><td>${esc(T[t].short)}</td><td>${esc(binLabel(A))}</td><td>${fmtInt(A.N)}</td><td>${fmtInt(A.F)}</td><td>${pct(A.rate)}</td><td>${pct(A.inner.rate)}</td><td>${pct(A.outer.rate)}</td><td>${Number.isFinite(A.ratio)?A.ratio.toFixed(2)+'×':'—'}</td><td>${fmtZ(A.zPool)}</td><td>${fmtZ(A.zStrat)}</td><td class="pill ${v.c}">${v.x}</td></tr>`;}).join('');
+  return`<details class="ov" ${rows?'open':''}><summary>全測項總覽(點選列切換測項)</summary><div class="scroll"><table class="ovt"><thead><tr><th>測項</th><th>Fail Bin</th><th>N</th><th>Fail</th><th>Rate</th><th>Inner</th><th>Outer</th><th>O/I</th><th>Pooled Z</th><th>Strat Z</th><th>判定</th></tr></thead><tbody>${rows}</tbody></table></div></details>`;
+}
+function bindOverview(){
+  document.querySelectorAll('.ovt tbody tr').forEach(tr=>tr.onclick=()=>{S.test=+tr.dataset.t;render();window.scrollTo({top:0,behavior:'smooth'});});
+}
+
+/* ====================== controls ====================== */
+function refreshControls(){
+  const gs=groups(),has=gs.length>0;
+  $('r_controls').hidden=!has;$('r_btnClear').disabled=!S.log.length&&!has;
+  if(!has){$('r_main').innerHTML=dropHTML;bindDrop();return;}
+  if(!gs.some(g=>g.key===S.groupKey))S.groupKey=gs[0].key;
+  $('r_selProd').innerHTML=gs.map(g=>`<option value="${esc(g.key)}"${g.key===S.groupKey?' selected':''}>${esc(g.product)}${g.prodId?' · '+esc(g.prodId):''} (${g.wafers.length} files)</option>`).join('');
+  const g=gs.find(g=>g.key===S.groupKey),lots=[...new Set(g.wafers.map(w=>w.lot))].sort();
+  if(S.lot!=='ALL'&&!lots.includes(S.lot))S.lot='ALL';
+  $('r_selLot').innerHTML=`<option value="ALL"${S.lot==='ALL'?' selected':''}>全部 (${lots.length} lot)</option>`+lots.map(l=>`<option${l===S.lot?' selected':''}>${esc(l)}</option>`).join('');
+  render();
+}
+function filesPanel(){
+  const box=$('r_filesBox');box.hidden=!S.log.length;if(!S.log.length)return;
+  const ok=S.log.filter(l=>l.ok).length,bad=S.log.length-ok,lots=new Set(S.wafers.map(w=>w.lot)).size;
+  $('r_filesSum').innerHTML=`已載入 ${ok} 個 log · ${lots} lot${bad?` · <span class="err">${bad} 個略過/失敗</span>`:''}(點開看清單)`;
+  $('r_filesTbl').innerHTML='<thead><tr><th>檔案</th><th>Lot</th><th>Wafer</th><th>Dies</th><th>狀態</th></tr></thead><tbody>'+
+    S.log.map(l=>`<tr><td>${esc(l.name)}</td><td>${esc(l.lot||'')}</td><td>${esc(l.wafer||'')}</td><td>${l.n||''}</td><td class="${l.ok?'':'err'}">${esc(l.ok?(l.dup?'重複 Wafer ID':'OK'):l.msg)}</td></tr>`).join('')+'</tbody>';
+}
+
+/* ====================== file loading ====================== */
+async function loadFiles(fl){
+  fl=[...fl];if(!fl.length)return;
+  const prog=$('r_prog');let done=0;
+  try{
+    const items=[];
+    for(const f of fl){prog.textContent=`讀取 ${f.name} …`;
+      try{items.push(...await expand(f.name,new Uint8Array(await f.arrayBuffer())));}
+      catch(e){S.log.push({name:f.name,ok:false,msg:e.message});}}
+    const dec=new TextDecoder('latin1');
+    for(const it of items){
+      done++;
+      if(it.error){S.log.push({name:it.name,ok:false,msg:it.error});continue;}
+      if(!/\.(csv|txt)$/i.test(it.name)){S.log.push({name:it.name,ok:false,msg:'略過(非 csv)'});continue;}
+      if(done%4===0){prog.textContent=`解析 ${done} / ${items.length} …`;await new Promise(r=>setTimeout(r));}
+      try{const w=parseLog(dec.decode(it.bytes),it.name);S.wafers.push(w);S.log.push({name:it.name,ok:true,lot:w.lot,wafer:w.wafer,n:w.n});}
+      catch(e){S.log.push({name:it.name,ok:false,msg:e.message});}
+    }
+    const seen=new Map();for(const w of S.wafers){const k=w.lot+'|'+w.wafer;seen.set(k,(seen.get(k)||0)+1);}
+    for(const l of S.log)if(l.ok&&seen.get(l.lot+'|'+l.wafer)>1)l.dup=true;
+    prog.textContent='';
+  }catch(e){prog.textContent='';alert('載入失敗:'+e.message);}
+  filesPanel();refreshControls();
+}
+
+const dropHTML=$('r_main').innerHTML;
+function bindDrop(){const d=$('r_drop');if(!d)return;d.onclick=()=>$('r_file').click();}
+$('r_btnPick').onclick=()=>$('r_file').click();
+$('r_file').onchange=e=>{loadFiles(e.target.files);e.target.value='';};
+$('r_btnClear').onclick=()=>{S.wafers=[];S.log=[];S.groupKey=null;S.lot='ALL';S.test=0;filesPanel();refreshControls();};
+$('r_selProd').onchange=e=>{S.groupKey=e.target.value;S.lot='ALL';S.test=-1;refreshControls();};
+$('r_selLot').onchange=e=>{S.lot=e.target.value;S.test=-1;render();};
+$('r_selTest').onchange=e=>{S.test=+e.target.value;render();};
+$('r_selMode').onchange=e=>{S.mode=e.target.value;render();};
+$('r_chkHide').onchange=e=>{S.hide=e.target.checked;render();};
+$('r_chkDedup').onchange=e=>{S.dedup=e.target.checked;render();};
+$('r_chkFlip').onchange=e=>{S.flip=e.target.checked;render();};
+['dragenter','dragover'].forEach(ev=>ROOT.addEventListener(ev,e=>{e.preventDefault();ROOT.classList.add('dragging');}));
+['dragleave','drop'].forEach(ev=>ROOT.addEventListener(ev,e=>{e.preventDefault();if(ev==='drop'||e.target===ROOT)ROOT.classList.remove('dragging');}));
+ROOT.addEventListener('drop',e=>{if(e.dataTransfer&&e.dataTransfer.files.length)loadFiles(e.dataTransfer.files);});
+bindDrop();
+})();
+
+/* ---------- top-level tabs ---------- */
+(function(){
+  const M=document.querySelector('main');
+  function go(n){
+    document.getElementById('cp').hidden=n!==1;document.getElementById('radial').hidden=n!==2;
+    M.classList.toggle('wide',n===2);
+    document.getElementById('ttab1').setAttribute('aria-selected',n===1);document.getElementById('ttab2').setAttribute('aria-selected',n===2);
+    window.dispatchEvent(new Event('resize'));
+  }
+  document.getElementById('ttab1').onclick=()=>go(1);document.getElementById('ttab2').onclick=()=>go(2);
+})();
+</script>
+</body>
+</html>
